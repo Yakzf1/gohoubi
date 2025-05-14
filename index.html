@@ -3,13 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My HP</title>
+  <title>かわいい通販ショップ</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>こんにちは、私のホームページへようこそ！</h1>
-  <button id="clickBtn">クリックしてメッセージを表示</button>
-  <p id="message"></p>
+  <header>
+    <h1>🎀 いいこ の おみせ 🎀</h1>
+  </header>
+
+  <main>
+    <!-- おいしい ごはん -->
+    <section class="category">
+      <h2 class="category-title">
+        <ruby>美味しい<rt>おいしい</rt></ruby>
+        <ruby>ご飯<rt>ごはん</rt></ruby>
+        🍰
+      </h2>
+      <div class="product-list">
+        <div class="product-card">
+          <img src="https://gohoubichoice.levecolle.co.jp/wp-content/uploads/2024/11/susiro-.jpg" alt="スシロー">
+          <p class="product-text">
+            <ruby>スシロー<rt>すしろー</rt></ruby>
+          </p>
+        <span class="point-value">10</span>
+        <ruby class="point-label">ポイント<rt>ぽいんと</rt></ruby>          
+        </div>
+        <div class="product-card">
+          <img src="https://placekitten.com/201/200" alt="ねこクッション" />
+          <h3>ねこクッション</h3>
+          <p>¥2,300</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- あそびば -->
+    <section class="category">
+      <h2 class="category-title">
+        <ruby>遊び場<rt>あそびば</rt></ruby>
+        🥎
+      </h2>
+      <div class="product-list">
+        <div class="product-card">
+          <img src="https://gohoubichoice.levecolle.co.jp/wp-content/uploads/2024/11/susiro-.jpg" alt="スシロー">
+          <h2>スシロー</h2>
+          <p>3 ポイント（ぽいんと）</p>
+          <button onclick="addToCart('ねこポーチ')">カートに追加</button>
+        </div>
+        <div class="product-card">
+          <img src="https://placekitten.com/201/200" alt="ねこクッション" />
+          <h3>ねこクッション</h3>
+          <p>¥2,300</p>
+          <button onclick="addToCart('ねこクッション')">カートに追加</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 良い子ショップ</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>

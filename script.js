@@ -1,3 +1,3 @@
-document.getElementById('clickBtn').addEventListener('click', () => {
-  document.getElementById('message').textContent = 'クリックありがとう！';
-});
+function addToCart(itemName) {
+  alert(itemName + " をカートに追加しました！");
+}
