@@ -13,21 +13,6 @@ header {
   color: white;
 }
 
-.information {
-  margin: 20px 20px 40px 20px;
-  height: 70px;
-  background-color: #72b3fd; /* ← やさしいピンク背景 */
-  border-radius: 15px;
-  box-shadow: 0 2px 8px rgba(117, 102, 102, 0.1);
-}
-
-.information-text {
-  font-weight: bold;
-  font-size: 1.7rem;
-  color: white;
-  padding: 16px 20px 12px 20px;
-}
-
 .category {
   margin: 20px 20px 40px 20px;
   
@@ -93,4 +78,19 @@ footer {
   margin-left: 6px;
   font-size: 1.4rem;
   color: #888;
+}
+
+.information {
+  margin: 20px 20px 40px 20px;
+  height: 70px;
+  background-color: #72b3fd; /* ← やさしいピンク背景 */
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(117, 102, 102, 0.1);
+}
+
+.information-text {
+  font-weight: bold;
+  font-size: 1.7rem;
+  color: white;
+  padding: 16px 20px 12px 20px;
 }
