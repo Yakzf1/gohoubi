@@ -104,7 +104,7 @@
 </head>
 <body>
 
-<h1>ジグソーパズル💖</h1>
+<h1>ジグソーパズル💖 ver 1.0.0</h1>
 <button onclick="initPuzzle()">スタート</button>
 <canvas id="fireworks"></canvas>
 <div id="puzzle"></div>
@@ -188,9 +188,10 @@
         piece.dataset.touchId = touch.identifier;
         piece.dataset.touchStartX = touch.clientX;
         piece.dataset.touchStartY = touch.clientY;
-        piece.style.transition = 'none';
+        piece.dataset.origTransform = piece.style.transform || "translate(0,0)";
+        piece.style.transition = "none";
         piece.classList.add("dragging");
-      }, { passive: true });
+      }, { passive: false });
 
       piece.addEventListener("touchmove", e => {
         if (!piece.classList.contains("dragging")) return;
@@ -199,7 +200,7 @@
             const dx = touch.clientX - piece.dataset.touchStartX;
             const dy = touch.clientY - piece.dataset.touchStartY;
             piece.style.transform = `translate(${dx}px, ${dy}px)`;
-            e.preventDefault();
+            e.preventDefault(); // 重要: スクロールを止める
           }
         }
       }, { passive: false });
