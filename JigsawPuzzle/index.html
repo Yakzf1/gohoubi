@@ -49,6 +49,7 @@
       margin: 0 auto 20px auto;
       width: max-content;
       touch-action: none;
+      position: relative;
     }
 
     .piece {
@@ -72,6 +73,10 @@
     .drag-over {
       border-color: #ff69b4;
       box-shadow: 0 0 12px 4px #ff69b4aa;
+    }
+
+    .piece.dragging {
+      opacity: 0.8;
     }
 
     #message {
@@ -110,8 +115,8 @@
 <p id="message"></p>
 
 <script>
-  const GRID_SIZE = 3;                   
-  const IMAGE_SIZE = 600;               
+  const GRID_SIZE = 3;
+  const IMAGE_SIZE = 600;
   const PIECE_SIZE = IMAGE_SIZE / GRID_SIZE;
 
   const puzzle = document.getElementById("puzzle");
@@ -122,14 +127,11 @@
     "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png"
   ];
   let imageIndex = 0;
-
   let pieces = [];
 
   function setCSSVariables() {
     document.documentElement.style.setProperty('--piece-size', PIECE_SIZE + 'px');
     document.documentElement.style.setProperty('--image-size', IMAGE_SIZE + 'px');
-    puzzle.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
-    puzzle.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
   }
 
   setCSSVariables();
@@ -160,6 +162,7 @@
       const y = Math.floor(pos / GRID_SIZE) * -PIECE_SIZE;
       piece.style.backgroundPosition = `${x}px ${y}px`;
 
+      // マウスドラッグ
       piece.addEventListener("dragstart", e => {
         e.dataTransfer.setData("text/plain", index);
       });
@@ -180,7 +183,7 @@
         swapPieces(fromIndex, index);
       });
 
-      // タッチ対応
+      // タッチ操作
       piece.addEventListener("touchstart", e => {
         const touch = e.touches[0];
         piece.classList.add("dragging");
@@ -190,7 +193,7 @@
         piece.dataset.index = index;
         piece.style.position = "absolute";
         piece.style.zIndex = 1000;
-        piece.style.pointerEvents = "none"; // 下のピースが取得できるように
+        piece.style.pointerEvents = "none";
       }, { passive: true });
 
       piece.addEventListener("touchmove", e => {
@@ -295,7 +298,6 @@
   }
 
   window.addEventListener('resize', resizeCanvas);
-
   initPuzzle();
 </script>
 
