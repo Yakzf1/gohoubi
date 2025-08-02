@@ -13,10 +13,11 @@
       color: #d6336c;
       padding: 10px;
       user-select: none;
+      margin: 0;
     }
     h1 {
       font-size: 2.4rem;
-      margin-bottom: 10px;
+      margin-bottom: 0px;
       text-shadow: 2px 2px 4px #ffc0cb88;
     }
     button {
@@ -29,17 +30,48 @@
       cursor: pointer;
       box-shadow: 0 4px 6px rgba(255, 119, 169, 0.5);
       transition: background 0.3s ease;
-      margin-bottom: 20px;
+      margin: 10px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     button:hover {
       background: #ff4d8d;
     }
+    #puzzle-container {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      /* width: 100vw;
+      height: 100vh; */
+      position: relative;
+      flex-direction: column;
+      margin-top: 10px;
+    }
+    #puzzle-wrapper {
+      position: relative;
+      width: fit-content;
+      height: fit-content;
+      user-select: none;
+    }
     #puzzle {
       display: grid;
       gap: 4px;
-      margin: 0 auto 20px auto;
-      width: max-content;
       touch-action: none;
+      z-index: 1;
+      border-radius: 15px;
+      background: transparent;
+      user-select: none;
+    }
+    #hint-image {
+      position: absolute;
+      top: -1;
+      left: -10;
+      opacity: 0.4;
+      z-index: 2;
+      pointer-events: none;
+      display: none;
+      border-radius: 15px;
+      user-select: none;
     }
     .piece {
       background-size: 600px 600px;
@@ -66,6 +98,7 @@
       text-shadow: 1px 1px 2px #ffc0cb88;
       min-height: 2.2rem;
       margin: 0 auto 20px auto;
+      white-space: pre-line;
     }
     .confetti {
       position: fixed;
@@ -90,24 +123,53 @@
         opacity: 0;
       }
     }
+    /* 難易度選択画面 */
+    #start-screen {
+      margin-top: 40px;
+    }    
+    #start-screen h2 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    .no-margin {
+      margin: 0 !important;
+    }
+
   </style>
 </head>
 <body>
 
-<h1>ジグソーパズル💖 ver 1.1.5</h1>
-<div id="puzzle"></div>
+<h1>ジグソーパズル💖 ver 1.2.1</h1>
+
+<div id="start-screen">
+  <h2>むずかしさを えらんでね 💕</h2>
+  <button onclick="setDifficulty(2)">かんたん（2×2）</button>
+  <button onclick="setDifficulty(3)">ふつう（3×3）</button>
+  <button onclick="setDifficulty(4)">むずかしい（4×4）</button>
+</div>
+
+<div id="puzzle-container">
+  <div id="puzzle-wrapper">
+    <div id="puzzle"></div>
+    <img id="hint-image" alt="ヒント画像" />
+  </div>
+  <button id="hint-button">ひんとをみる🧐</button>
+</div>
+
 <p id="message"></p>
 <div class="confetti" id="confetti"></div>
 
 <script>
-  const GRID = 3;
-  const SIZE = 600;
-  const PIECE_SIZE = SIZE / GRID;
+  let GRID = 3;
+  let SIZE = 600;
+  let PIECE_SIZE = SIZE / GRID;
   const puzzle = document.getElementById("puzzle");
   const message = document.getElementById("message");
   const confetti = document.getElementById("confetti");
+  const hintImage = document.getElementById("hint-image");
+  const hintButton = document.getElementById("hint-button");
+  const wrapper = document.getElementById("puzzle-wrapper");
 
-  // パズル画像の元データ
   let images = [
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_05_sp.png",
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_01_sp.png",
@@ -132,6 +194,25 @@
   let currentImageIndex = 0;
   let pieces = [];
 
+  let touchDragClone = null;
+  let touchStartIndex = null;
+  let touchCurrentIndex = null;
+
+  function setDifficulty(gridSize) {
+    GRID = gridSize;
+    PIECE_SIZE = SIZE / GRID;
+    document.getElementById("start-screen").style.display = "none";
+    document.getElementById("puzzle-container").style.display = "flex";
+    puzzle.style.display = "grid";
+    message.style.display = "block";
+    confetti.style.display = "block";
+    const startH2 = document.querySelector("#start-screen h2");
+    if (startH2) {
+      startH2.classList.add("no-margin");
+    }
+    start();
+  }
+
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -139,10 +220,6 @@
     }
     return arr;
   }
-
-  let touchDragClone = null;  // クローン要素
-  let touchStartIndex = null; // ドラッグ開始ピースindex
-  let touchCurrentIndex = null; // ドラッグ中のターゲットindex
 
   function initPuzzle() {
     pieces = shuffle([...Array(GRID * GRID).keys()]);
@@ -152,11 +229,29 @@
     message.textContent = "";
     confetti.innerHTML = "";
 
+    const gap = 4;      // CSSのgap値
+    const border = 2;   // ピースのボーダー幅（CSSで2px）
+
+    // パズル全体の幅 = ピースサイズ×グリッド + gap×(グリッド-1) + ボーダー×2×グリッド
+    const puzzleWidth = GRID * PIECE_SIZE + (GRID - 1) * gap + GRID * border * 2;
+
+    // wrapperのサイズをピッタリ合わせる
+    wrapper.style.width = puzzleWidth + "px";
+    wrapper.style.height = puzzleWidth + "px";
+
+    // ヒント画像のサイズも合わせる
+    hintImage.style.width = wrapper.style.width;
+    hintImage.style.height = wrapper.style.height;
+    hintImage.style.top = "0";
+    hintImage.style.left = "0";
+
     pieces.forEach((pos, index) => {
       const div = document.createElement("div");
       div.className = "piece";
-      div.style.width = div.style.height = PIECE_SIZE + "px";
+      div.style.width = PIECE_SIZE + "px";
+      div.style.height = PIECE_SIZE + "px";
       div.style.backgroundImage = `url(${images[currentImageIndex]})`;
+      // 背景位置は元画像サイズ(600x600)に合わせて
       const x = (pos % GRID) * -PIECE_SIZE;
       const y = Math.floor(pos / GRID) * -PIECE_SIZE;
       div.style.backgroundPosition = `${x}px ${y}px`;
@@ -164,7 +259,6 @@
       div.dataset.correct = pos;
       div.draggable = true;
 
-      // PC用ドラッグ＆ドロップ
       div.addEventListener("dragstart", e => {
         e.dataTransfer.setData("text/plain", index);
       });
@@ -182,13 +276,12 @@
         swapPieces(from, index);
       });
 
-      // タッチ用イベント
+      // タッチ操作
       div.addEventListener("touchstart", e => {
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
         touchStartIndex = index;
 
-        // 半透明クローンを作成
         touchDragClone = div.cloneNode(true);
         touchDragClone.style.position = "fixed";
         touchDragClone.style.pointerEvents = "none";
@@ -207,7 +300,6 @@
       div.addEventListener("touchmove", e => {
         if (!touchDragClone) return;
         for (let touch of e.changedTouches) {
-          // タッチ位置にクローンを追従
           touchDragClone.style.left = touch.clientX - div.offsetWidth / 2 + "px";
           touchDragClone.style.top = touch.clientY - div.offsetHeight / 2 + "px";
           e.preventDefault();
@@ -216,9 +308,7 @@
 
       div.addEventListener("touchend", e => {
         if (!touchDragClone) return;
-
         for (let touch of e.changedTouches) {
-          // ドロップ判定
           const dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
           if (dropElem && dropElem.classList.contains("piece")) {
             touchCurrentIndex = parseInt(dropElem.dataset.index);
@@ -227,15 +317,12 @@
             }
           }
         }
-
-        // クローン削除＆リセット
         if (touchDragClone && touchDragClone.parentNode) {
           touchDragClone.parentNode.removeChild(touchDragClone);
         }
         touchDragClone = null;
         touchStartIndex = null;
         touchCurrentIndex = null;
-
         e.preventDefault();
       }, { passive: false });
 
@@ -262,7 +349,7 @@
   function checkSolved() {
     const isCorrect = pieces.every((pos, i) => pos === i);
     if (isCorrect) {
-      message.textContent = "かんせい！すごーい！🎉" + '\n' + (currentImageIndex + 1) + "こ くりあ！";
+      message.textContent = "かんせい！すごーい！🎉\n" + (currentImageIndex + 1) + "こ くりあ！";
       startConfetti();
       setTimeout(() => {
         currentImageIndex = (currentImageIndex + 1) % images.length;
@@ -282,6 +369,39 @@
       confetti.appendChild(div);
     }
   }
+
+  function showHint() {
+    hintImage.src = images[currentImageIndex];
+    hintImage.style.display = "block";
+  }
+
+  function hideHint() {
+    hintImage.style.display = "none";
+  }
+
+  // ヒントボタンにイベント追加
+  hintButton.addEventListener("mousedown", e => {
+    e.preventDefault();
+    showHint();
+  });
+  hintButton.addEventListener("mouseup", e => {
+    e.preventDefault();
+    hideHint();
+  });
+  hintButton.addEventListener("mouseleave", e => {
+    hideHint();
+  });
+  hintButton.addEventListener("touchstart", e => {
+    e.preventDefault();
+    showHint();
+  }, { passive: false });
+  hintButton.addEventListener("touchend", e => {
+    e.preventDefault();
+    hideHint();
+  });
+  hintButton.addEventListener("touchcancel", e => {
+    hideHint();
+  });
 
   async function checkImages(images) {
     const validImages = [];
@@ -313,12 +433,7 @@
     }
     images = shuffle(images);
     initPuzzle();
-  }  
-
-  // 初期動作 
-  // －－－－－－－－－－－－－－－－－
-  start();
-  
+  }
 </script>
 
 </body>
