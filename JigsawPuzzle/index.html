@@ -48,6 +48,7 @@
       box-shadow: 0 6px 10px rgba(255, 182, 193, 0.5);
       cursor: grab;
       user-select: none;
+      touch-action: none;
     }
     .piece:active {
       cursor: grabbing;
@@ -64,6 +65,7 @@
       color: #e91e63;
       text-shadow: 1px 1px 2px #ffc0cb88;
       min-height: 2.2rem;
+      margin: 0 auto 20px auto;
     }
     .confetti {
       position: fixed;
@@ -92,7 +94,7 @@
 </head>
 <body>
 
-<h1>ジグソーパズル💖 ver 1.0.2</h1>
+<h1>ジグソーパズル💖 ver 1.1.0</h1>
 <button onclick="initPuzzle()">スタート</button>
 <div id="puzzle"></div>
 <p id="message"></p>
@@ -109,7 +111,10 @@
   const images = [
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_03_sp.png",
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_04_sp.png",
-    "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png"
+    "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png",
+    "https://aipri.jp/anime/wp/wp-content/themes/aipri_anime_v2/assets/images/common/character/img_character_mitsuki_2.png",
+    "https://aipri.jp/anime/wp/wp-content/themes/aipri_anime_v2/assets/images/common/character/img_character_himari_2.png",
+    "https://prcdn.freetls.fastly.net/release_image/16719/1888/16719-1888-5d50af19f4f56167f8ac68d1f632b722-2500x2500.jpg?width=1950&height=1350&quality=85%2C65&format=jpeg&auto=webp&fit=bounds&bg-color=fff",
   ];
   let currentImageIndex = 0;
   let pieces = [];
@@ -121,6 +126,10 @@
     }
     return arr;
   }
+
+  let touchDragClone = null;  // クローン要素
+  let touchStartIndex = null; // ドラッグ開始ピースindex
+  let touchCurrentIndex = null; // ドラッグ中のターゲットindex
 
   function initPuzzle() {
     pieces = shuffle([...Array(GRID * GRID).keys()]);
@@ -142,6 +151,7 @@
       div.dataset.correct = pos;
       div.draggable = true;
 
+      // PC用ドラッグ＆ドロップ
       div.addEventListener("dragstart", e => {
         e.dataTransfer.setData("text/plain", index);
       });
@@ -159,35 +169,67 @@
         swapPieces(from, index);
       });
 
+      // タッチ用イベント
+
+      div.addEventListener("touchstart", e => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        touchStartIndex = index;
+
+        // 半透明クローンを作成
+        touchDragClone = div.cloneNode(true);
+        touchDragClone.style.position = "fixed";
+        touchDragClone.style.pointerEvents = "none";
+        touchDragClone.style.opacity = "0.6";
+        touchDragClone.style.zIndex = "10000";
+        touchDragClone.style.width = div.offsetWidth + "px";
+        touchDragClone.style.height = div.offsetHeight + "px";
+        touchDragClone.style.left = touch.clientX - div.offsetWidth / 2 + "px";
+        touchDragClone.style.top = touch.clientY - div.offsetHeight / 2 + "px";
+        touchDragClone.style.transform = "none";
+        document.body.appendChild(touchDragClone);
+
+        e.preventDefault();
+      }, { passive: false });
+
+      div.addEventListener("touchmove", e => {
+        if (!touchDragClone) return;
+        for (let touch of e.changedTouches) {
+          // タッチ位置にクローンを追従
+          touchDragClone.style.left = touch.clientX - div.offsetWidth / 2 + "px";
+          touchDragClone.style.top = touch.clientY - div.offsetHeight / 2 + "px";
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      div.addEventListener("touchend", e => {
+        if (!touchDragClone) return;
+
+        for (let touch of e.changedTouches) {
+          // ドロップ判定
+          const dropElem = document.elementFromPoint(touch.clientX, touch.clientY);
+          if (dropElem && dropElem.classList.contains("piece")) {
+            touchCurrentIndex = parseInt(dropElem.dataset.index);
+            if (touchStartIndex !== null && touchCurrentIndex !== null && touchStartIndex !== touchCurrentIndex) {
+              swapPieces(touchStartIndex, touchCurrentIndex);
+            }
+          }
+        }
+
+        // クローン削除＆リセット
+        if (touchDragClone && touchDragClone.parentNode) {
+          touchDragClone.parentNode.removeChild(touchDragClone);
+        }
+        touchDragClone = null;
+        touchStartIndex = null;
+        touchCurrentIndex = null;
+
+        e.preventDefault();
+      }, { passive: false });
+
       puzzle.appendChild(div);
     });
   }
-
-  // タッチ対応
-  let touchIndex = null;
-  puzzle.addEventListener("touchstart", e => {
-    const touched = document.elementFromPoint(
-      e.touches[0].clientX,
-      e.touches[0].clientY
-    );
-    if (touched?.classList.contains("piece")) {
-      touchIndex = parseInt(touched.dataset.index);
-    }
-  }, { passive: false });
-
-  puzzle.addEventListener("touchend", e => {
-    const target = document.elementFromPoint(
-      e.changedTouches[0].clientX,
-      e.changedTouches[0].clientY
-    );
-    if (target?.classList.contains("piece")) {
-      const toIndex = parseInt(target.dataset.index);
-      if (touchIndex !== null && toIndex !== null && touchIndex !== toIndex) {
-        swapPieces(touchIndex, toIndex);
-      }
-    }
-    touchIndex = null;
-  }, { passive: false });
 
   function swapPieces(from, to) {
     [pieces[from], pieces[to]] = [pieces[to], pieces[from]];
@@ -214,6 +256,8 @@
         currentImageIndex = (currentImageIndex + 1) % images.length;
         initPuzzle();
       }, 3000);
+    } else {
+      message.textContent = "";
     }
   }
 
