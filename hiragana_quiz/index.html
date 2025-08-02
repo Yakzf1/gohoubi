@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ひらがなクイズ</title>
+<style>
+  body { font-family: sans-serif; text-align: center; margin: 20px; }
+  img { max-width: 300px; margin: 20px; }
+  button { font-size: 20px; margin: 10px; padding: 10px 20px; }
+</style>
+</head>
+<body>
+
+<h1>ひらがなクイズ</h1>
+<div id="quiz-container">
+  <img id="quiz-image" src="" alt="クイズ画像">
+  <div id="options"></div>
+  <p id="result" style="font-size: 24px; color: green;"></p>
+</div>
+
+<script>
+
+// #######################################
+// グローバル変数・固定値
+// #######################################
+
+// クイズデータ
+const quizData = [
+  {
+    image: "https://d2o4rrq92x9csx.cloudfront.net/articles/Glossy-design_2504-12-14.webp", // りんご
+    answer: "りんご",
+  },
+  {
+    image: "https://www.sozai-library.com/wp-content/uploads/2013/07/01039.jpg", // ばなな
+    answer: "ばなな",
+  }
+];
+
+// 答えデータ
+const answerData = [
+    "りんご", "みかん", "ばなな", "ぶどう", "いちご", "すいか", "なし", "もも", "さくらんぼ", "めろん",
+    "きゅうり", "とまと", "だいこん", "にんじん", "ごぼう", "ねぎ", "たまねぎ", "じゃがいも", "さつまいも", "かぼちゃ",
+    "いぬ", "ねこ", "うさぎ", "とり", "うし", "うま", "やぎ", "ぶた", "ひつじ", "くま",
+    "やま", "かわ", "うみ", "そら", "くも", "あめ", "ゆき", "かぜ", "たいよう", "つき",
+    "くるま", "じてんしゃ", "でんしゃ", "ひこうき", "ふね", "ばす", "しんかんせん", "たくしー", "ばいく", "ろけっと",
+    "いえ", "まど", "と", "へや", "てれび", "そうじき", "せんたくき", "れいぞうこ", "でんき", "けいたい",
+    "えんぴつ", "けしごむ", "のーと", "ほん", "じしょ", "かばん", "ふでばこ", "はさみ", "のり", "てーぷ",
+    "はな", "くさ", "き", "みず", "いけ", "もり", "はっぱ", "たね", "つち", "はなび",
+    "うた", "おどり", "え", "ほん", "がっこう", "せんせい", "ともだち", "きょうしつ", "きゅうしょく", "うんどう",
+    "あさ", "ひる", "よる", "よあけ", "ゆうがた", "けさ", "こんばん", "あした", "きのう", "きょう"
+];
+
+let currentQuiz = 0;
+
+// #######################################
+// 関数群
+// #######################################
+
+// クイズを作成
+function loadQuiz() {
+
+  // クイズを用意
+  const quiz = quizData[currentQuiz];
+  document.getElementById("quiz-image").src = quiz.image;
+
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+
+  let randomNums = createRandomNums();
+  let answers = [];
+
+  // ハズレの選択肢を追加
+  for (let index = 0; index < 5; index++) {
+    answers.push(answerData[randomNums[index]]);
+  }
+
+  // 正解の選択肢を追加
+  answers.push(quiz.answer);
+
+  // 選択肢をシャッフル
+  answers = shuffleArray(answers);
+  
+  // ボタンを用意
+  answers.forEach(answer => {
+    const btn = document.createElement("button");  
+    btn.textContent = answer;
+    btn.onclick = () => checkAnswer(answer);
+    optionsDiv.appendChild(btn);
+  });
+
+  // 答えをリセット
+  document.getElementById("result").textContent = "";
+}
+
+// 答え合わせ
+function checkAnswer(selected) {
+  const quiz = quizData[currentQuiz];
+  const result = document.getElementById("result");
+  if (selected === quiz.answer) {
+    result.textContent = "せいかい！ 🎉";
+    result.style.color = "green";
+    setTimeout(() => {
+      currentQuiz = (currentQuiz + 1) % quizData.length;
+      loadQuiz();
+    }, 1000);
+  } else {
+    result.textContent = "ちがうよ ❌";
+    result.style.color = "red";
+  }
+}
+
+// 乱数作成
+// ランダムな4個の整数が入った配列を返す
+function createRandomNums() {  
+  let count = 5;
+  let max = 99;
+  let options = [];
+  while (options.length < count) {
+      let r = Math.floor(Math.random() * max);
+      if (!options.includes(r)) {
+          options.push(r);
+      }
+  }
+  return options;
+}
+
+// 配列をランダムにシャッフル
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1)); // 0〜i のランダム整数
+        [array[i], array[j]] = [array[j], array[i]]; // 要素を入れ替え
+    }
+    return array;
+}
+
+// #######################################
+// 実行処理
+// #######################################
+loadQuiz();
+
+</script>
+
+</body>
+</html>
