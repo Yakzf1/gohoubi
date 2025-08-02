@@ -49,7 +49,6 @@
       margin: 0 auto 20px auto;
       width: max-content;
       touch-action: none;
-      position: relative;
     }
 
     .piece {
@@ -62,6 +61,7 @@
       cursor: grab;
       transition: transform 0.2s ease;
       user-select: none;
+      position: relative;
     }
 
     .piece:active {
@@ -73,10 +73,6 @@
     .drag-over {
       border-color: #ff69b4;
       box-shadow: 0 0 12px 4px #ff69b4aa;
-    }
-
-    .piece.dragging {
-      opacity: 0.8;
     }
 
     #message {
@@ -115,8 +111,8 @@
 <p id="message"></p>
 
 <script>
-  const GRID_SIZE = 3;
-  const IMAGE_SIZE = 600;
+  const GRID_SIZE = 3;                   
+  const IMAGE_SIZE = 600;                
   const PIECE_SIZE = IMAGE_SIZE / GRID_SIZE;
 
   const puzzle = document.getElementById("puzzle");
@@ -127,11 +123,14 @@
     "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png"
   ];
   let imageIndex = 0;
+
   let pieces = [];
 
   function setCSSVariables() {
     document.documentElement.style.setProperty('--piece-size', PIECE_SIZE + 'px');
     document.documentElement.style.setProperty('--image-size', IMAGE_SIZE + 'px');
+    puzzle.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
+    puzzle.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
   }
 
   setCSSVariables();
@@ -162,7 +161,6 @@
       const y = Math.floor(pos / GRID_SIZE) * -PIECE_SIZE;
       piece.style.backgroundPosition = `${x}px ${y}px`;
 
-      // マウスドラッグ
       piece.addEventListener("dragstart", e => {
         e.dataTransfer.setData("text/plain", index);
       });
@@ -183,42 +181,52 @@
         swapPieces(fromIndex, index);
       });
 
-      // タッチ操作
+      // タッチドラッグ対応
       piece.addEventListener("touchstart", e => {
+        if (e.touches.length !== 1) return;
         const touch = e.touches[0];
-        piece.classList.add("dragging");
         piece.dataset.touchId = touch.identifier;
-        piece.dataset.startX = touch.clientX;
-        piece.dataset.startY = touch.clientY;
-        piece.dataset.index = index;
-        piece.style.position = "absolute";
-        piece.style.zIndex = 1000;
-        piece.style.pointerEvents = "none";
+        piece.dataset.touchStartX = touch.clientX;
+        piece.dataset.touchStartY = touch.clientY;
+        piece.style.transition = 'none';
+        piece.classList.add("dragging");
       }, { passive: true });
 
       piece.addEventListener("touchmove", e => {
-        const touch = e.touches[0];
-        if (touch.identifier != piece.dataset.touchId) return;
-        const dx = touch.clientX - piece.dataset.startX;
-        const dy = touch.clientY - piece.dataset.startY;
-        piece.style.transform = `translate(${dx}px, ${dy}px)`;
-      }, { passive: true });
+        if (!piece.classList.contains("dragging")) return;
+        for (let touch of e.changedTouches) {
+          if (touch.identifier == piece.dataset.touchId) {
+            const dx = touch.clientX - piece.dataset.touchStartX;
+            const dy = touch.clientY - piece.dataset.touchStartY;
+            piece.style.transform = `translate(${dx}px, ${dy}px)`;
+            e.preventDefault();
+          }
+        }
+      }, { passive: false });
 
       piece.addEventListener("touchend", e => {
-        piece.style.transform = "";
-        piece.style.position = "";
-        piece.style.zIndex = "";
-        piece.style.pointerEvents = "";
-        piece.classList.remove("dragging");
+        if (!piece.classList.contains("dragging")) return;
+        for (let touch of e.changedTouches) {
+          if (touch.identifier == piece.dataset.touchId) {
+            piece.style.transition = '';
+            piece.style.transform = '';
+            piece.classList.remove("dragging");
 
-        const fromIndex = piece.dataset.index;
-        const touch = e.changedTouches[0];
-        const toElem = document.elementFromPoint(touch.clientX, touch.clientY);
-        const toIndex = toElem?.dataset?.index;
-        if (toIndex !== undefined && fromIndex !== toIndex) {
-          swapPieces(fromIndex, toIndex);
+            // ドロップ位置のピース判定
+            const dropX = touch.clientX;
+            const dropY = touch.clientY;
+            const dropElem = document.elementFromPoint(dropX, dropY);
+            if (dropElem && dropElem.classList.contains("piece")) {
+              const fromIndex = piece.dataset.index;
+              const toIndex = dropElem.dataset.index;
+              if (fromIndex !== toIndex) {
+                swapPieces(fromIndex, toIndex);
+              }
+            }
+            piece.dataset.touchId = null;
+          }
         }
-      });
+      }, { passive: true });
 
       puzzle.appendChild(piece);
     });
@@ -298,6 +306,7 @@
   }
 
   window.addEventListener('resize', resizeCanvas);
+
   initPuzzle();
 </script>
 
