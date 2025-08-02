@@ -49,7 +49,6 @@
       margin: 0 auto 20px auto;
       width: max-content;
       touch-action: none;
-      position: relative;
     }
 
     .piece {
@@ -105,7 +104,7 @@
 </head>
 <body>
 
-<h1>ジグソーパズル💖 ver 1.0.2</h1>
+<h1>ジグソーパズル💖 ver 1.0.1</h1>
 <button onclick="initPuzzle()">スタート</button>
 <canvas id="fireworks"></canvas>
 <div id="puzzle"></div>
@@ -126,10 +125,6 @@
   let imageIndex = 0;
 
   let pieces = [];
-  let dragFromIndex = null;
-  let touchDraggingPiece = null;
-  let touchOffsetX = 0;
-  let touchOffsetY = 0;
 
   function setCSSVariables() {
     document.documentElement.style.setProperty('--piece-size', PIECE_SIZE + 'px');
@@ -154,8 +149,6 @@
     }
     puzzle.innerHTML = "";
     message.textContent = "";
-    dragFromIndex = null;
-    touchDraggingPiece = null;
 
     pieces.forEach((pos, index) => {
       const piece = document.createElement("div");
@@ -168,9 +161,7 @@
       const y = Math.floor(pos / GRID_SIZE) * -PIECE_SIZE;
       piece.style.backgroundPosition = `${x}px ${y}px`;
 
-      // マウスドラッグイベント
       piece.addEventListener("dragstart", e => {
-        dragFromIndex = index;
         e.dataTransfer.setData("text/plain", index);
       });
 
@@ -186,93 +177,66 @@
       piece.addEventListener("drop", e => {
         e.preventDefault();
         piece.classList.remove("drag-over");
-        const fromIndex = dragFromIndex !== null ? dragFromIndex : e.dataTransfer.getData("text/plain");
+        const fromIndex = e.dataTransfer.getData("text/plain");
         swapPieces(fromIndex, index);
-        dragFromIndex = null;
       });
 
-      // タッチドラッグイベント
+      // タッチドラッグ対応
       piece.addEventListener("touchstart", e => {
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
-        touchDraggingPiece = piece;
-        dragFromIndex = index;
-        const rect = piece.getBoundingClientRect();
-        touchOffsetX = touch.clientX - rect.left;
-        touchOffsetY = touch.clientY - rect.top;
-        piece.style.position = "fixed";
-        piece.style.zIndex = 1000;
-        piece.style.width = PIECE_SIZE + "px";
-        piece.style.height = PIECE_SIZE + "px";
-        moveAt(touch.clientX, touch.clientY);
-        e.preventDefault();
+        piece.dataset.touchId = touch.identifier;
+        piece.dataset.touchStartX = touch.clientX;
+        piece.dataset.touchStartY = touch.clientY;
+        piece.dataset.origTransform = piece.style.transform || "translate(0,0)";
+        piece.style.transition = "none";
+        piece.classList.add("dragging");
       }, { passive: false });
 
       piece.addEventListener("touchmove", e => {
-        if (!touchDraggingPiece) return;
+        if (!piece.classList.contains("dragging")) return;
         for (let touch of e.changedTouches) {
-          if (touchDraggingPiece && touch.identifier === e.touches[0].identifier) {
-            moveAt(touch.clientX, touch.clientY);
-            e.preventDefault();
+          if (touch.identifier == piece.dataset.touchId) {
+            const dx = touch.clientX - piece.dataset.touchStartX;
+            const dy = touch.clientY - piece.dataset.touchStartY;
+            piece.style.transform = `translate(${dx}px, ${dy}px)`;
+            e.preventDefault(); // 重要: スクロールを止める
           }
         }
       }, { passive: false });
 
       piece.addEventListener("touchend", e => {
-        if (!touchDraggingPiece) return;
-        const toIndex = getPieceIndexFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-        if (toIndex !== null && toIndex !== dragFromIndex) {
-          swapPieces(dragFromIndex, toIndex);
-        }
-        resetDraggingPiece();
-        e.preventDefault();
-      }, { passive: false });
+        if (!piece.classList.contains("dragging")) return;
+        for (let touch of e.changedTouches) {
+          if (touch.identifier == piece.dataset.touchId) {
+            piece.style.transition = '';
+            piece.style.transform = '';
+            piece.classList.remove("dragging");
 
-      piece.addEventListener("touchcancel", e => {
-        resetDraggingPiece();
-        e.preventDefault();
-      }, { passive: false });
+            // ドロップ位置のピース判定
+            const dropX = touch.clientX;
+            const dropY = touch.clientY;
+            const dropElem = document.elementFromPoint(dropX, dropY);
+            if (dropElem && dropElem.classList.contains("piece")) {
+              const fromIndex = piece.dataset.index;
+              const toIndex = dropElem.dataset.index;
+              if (fromIndex !== toIndex) {
+                swapPieces(fromIndex, toIndex);
+              }
+            }
+            piece.dataset.touchId = null;
+          }
+        }
+      }, { passive: true });
 
       puzzle.appendChild(piece);
     });
-  }
-
-  function moveAt(clientX, clientY) {
-    if (!touchDraggingPiece) return;
-    // 画面端を考慮しつつ移動
-    let left = clientX - touchOffsetX;
-    let top = clientY - touchOffsetY;
-    left = Math.min(window.innerWidth - PIECE_SIZE, Math.max(0, left));
-    top = Math.min(window.innerHeight - PIECE_SIZE, Math.max(0, top));
-    touchDraggingPiece.style.left = left + "px";
-    touchDraggingPiece.style.top = top + "px";
-  }
-
-  // 画面内の座標からピースのインデックスを特定（ドロップ先判定）
-  function getPieceIndexFromPoint(x, y) {
-    const elements = document.elementsFromPoint(x, y);
-    for (const el of elements) {
-      if (el.classList.contains("piece")) {
-        return Number(el.dataset.index);
-      }
-    }
-    return null;
   }
 
   function swapPieces(from, to) {
     [pieces[from], pieces[to]] = [pieces[to], pieces[from]];
     initPuzzle(false);
     checkSolved();
-  }
-
-  function resetDraggingPiece() {
-    if (!touchDraggingPiece) return;
-    touchDraggingPiece.style.position = "";
-    touchDraggingPiece.style.zIndex = "";
-    touchDraggingPiece.style.left = "";
-    touchDraggingPiece.style.top = "";
-    touchDraggingPiece = null;
-    dragFromIndex = null;
   }
 
   function checkSolved() {
