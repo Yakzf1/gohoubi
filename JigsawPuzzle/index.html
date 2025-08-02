@@ -2,27 +2,23 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>ジグソーパズル</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ジグソーパズル💖</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Comfortaa&display=swap');
-
+    @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
     body {
-      font-family: 'Comfortaa', cursive, sans-serif;
+      font-family: 'Yomogi', cursive;
       background: #fff0f6;
       text-align: center;
       color: #d6336c;
-      padding: 5px;
+      padding: 10px;
       user-select: none;
-      overflow-x: hidden;
     }
-
     h1 {
       font-size: 2.4rem;
       margin-bottom: 10px;
-      text-shadow: 2px 2px 4px #ffc0cbaa;
+      text-shadow: 2px 2px 4px #ffc0cb88;
     }
-
     button {
       background: #ff77a9;
       border: none;
@@ -34,279 +30,202 @@
       box-shadow: 0 4px 6px rgba(255, 119, 169, 0.5);
       transition: background 0.3s ease;
       margin-bottom: 20px;
-      user-select: none;
     }
-
     button:hover {
       background: #ff4d8d;
     }
-
     #puzzle {
       display: grid;
-      grid-template-columns: repeat(3, var(--piece-size));
-      grid-template-rows: repeat(3, var(--piece-size));
       gap: 6px;
       margin: 0 auto 20px auto;
       width: max-content;
       touch-action: none;
     }
-
     .piece {
-      width: var(--piece-size);
-      height: var(--piece-size);
-      background-size: var(--image-size) var(--image-size);
+      background-size: 600px 600px;
       border-radius: 15px;
       border: 2px solid #ffb6c1;
       box-shadow: 0 6px 10px rgba(255, 182, 193, 0.5);
       cursor: grab;
-      transition: transform 0.2s ease;
       user-select: none;
-      position: relative;
     }
-
     .piece:active {
       cursor: grabbing;
       transform: scale(1.05);
       box-shadow: 0 10px 15px rgba(255, 182, 193, 0.8);
     }
-
     .drag-over {
       border-color: #ff69b4;
       box-shadow: 0 0 12px 4px #ff69b4aa;
     }
-
     #message {
-      font-size: 2.3rem;
+      font-size: 2rem;
       font-weight: bold;
-      margin: 0 auto 20px auto;
       color: #e91e63;
-      text-shadow: 1px 1px 2px #ffc0cbaa;
-      min-height: 2rem;
-      user-select: none;
-      animation: messageFlash 1s infinite alternate;
+      text-shadow: 1px 1px 2px #ffc0cb88;
+      min-height: 2.2rem;
     }
-
-    canvas#fireworks {
+    .confetti {
       position: fixed;
-      top: 0;
-      left: 0;
       width: 100vw;
       height: 100vh;
+      top: 0; left: 0;
       pointer-events: none;
-      z-index: 9999;
+      z-index: 999;
+      overflow: hidden;
     }
-
-    @keyframes messageFlash {
-      0%, 100% { color: #e91e63; text-shadow: 0 0 10px #ff4081; }
-      50% { color: #ff4081; text-shadow: 0 0 20px #f48fb1; }
+    .confetti div {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: pink;
+      animation: fall 3s linear infinite;
+      border-radius: 50%;
+    }
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
     }
   </style>
 </head>
 <body>
 
-<h1>ジグソーパズル💖 ver 1.0.1</h1>
+<h1>ジグソーパズル💖 ver 1.0.2</h1>
 <button onclick="initPuzzle()">スタート</button>
-<canvas id="fireworks"></canvas>
 <div id="puzzle"></div>
 <p id="message"></p>
+<div class="confetti" id="confetti"></div>
 
 <script>
-  const GRID_SIZE = 3;                   
-  const IMAGE_SIZE = 600;                
-  const PIECE_SIZE = IMAGE_SIZE / GRID_SIZE;
-
+  const GRID = 3;
+  const SIZE = 600;
+  const PIECE_SIZE = SIZE / GRID;
   const puzzle = document.getElementById("puzzle");
   const message = document.getElementById("message");
-  const imageList = [
+  const confetti = document.getElementById("confetti");
+
+  const images = [
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_03_sp.png",
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_04_sp.png",
     "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png"
   ];
-  let imageIndex = 0;
-
+  let currentImageIndex = 0;
   let pieces = [];
 
-  function setCSSVariables() {
-    document.documentElement.style.setProperty('--piece-size', PIECE_SIZE + 'px');
-    document.documentElement.style.setProperty('--image-size', IMAGE_SIZE + 'px');
-    puzzle.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
-    puzzle.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
 
-  setCSSVariables();
-
-  function shuffle(array) {
-    for (let i = array.length -1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i+1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
-
-  function initPuzzle(shufflePieces = true) {
-    if (shufflePieces) {
-      pieces = shuffle([...Array(GRID_SIZE * GRID_SIZE).keys()]);
-    }
+  function initPuzzle() {
+    pieces = shuffle([...Array(GRID * GRID).keys()]);
+    puzzle.style.gridTemplateColumns = `repeat(${GRID}, ${PIECE_SIZE}px)`;
+    puzzle.style.gridTemplateRows = `repeat(${GRID}, ${PIECE_SIZE}px)`;
     puzzle.innerHTML = "";
     message.textContent = "";
+    confetti.innerHTML = "";
 
     pieces.forEach((pos, index) => {
-      const piece = document.createElement("div");
-      piece.className = "piece";
-      piece.draggable = true;
-      piece.dataset.index = index;
-      piece.dataset.correct = pos;
-      piece.style.backgroundImage = `url(${imageList[imageIndex]})`;
-      const x = (pos % GRID_SIZE) * -PIECE_SIZE;
-      const y = Math.floor(pos / GRID_SIZE) * -PIECE_SIZE;
-      piece.style.backgroundPosition = `${x}px ${y}px`;
+      const div = document.createElement("div");
+      div.className = "piece";
+      div.style.width = div.style.height = PIECE_SIZE + "px";
+      div.style.backgroundImage = `url(${images[currentImageIndex]})`;
+      const x = (pos % GRID) * -PIECE_SIZE;
+      const y = Math.floor(pos / GRID) * -PIECE_SIZE;
+      div.style.backgroundPosition = `${x}px ${y}px`;
+      div.dataset.index = index;
+      div.dataset.correct = pos;
+      div.draggable = true;
 
-      piece.addEventListener("dragstart", e => {
+      div.addEventListener("dragstart", e => {
         e.dataTransfer.setData("text/plain", index);
       });
-
-      piece.addEventListener("dragover", e => {
+      div.addEventListener("dragover", e => {
         e.preventDefault();
-        piece.classList.add("drag-over");
+        div.classList.add("drag-over");
       });
-
-      piece.addEventListener("dragleave", () => {
-        piece.classList.remove("drag-over");
+      div.addEventListener("dragleave", () => {
+        div.classList.remove("drag-over");
       });
-
-      piece.addEventListener("drop", e => {
+      div.addEventListener("drop", e => {
         e.preventDefault();
-        piece.classList.remove("drag-over");
-        const fromIndex = e.dataTransfer.getData("text/plain");
-        swapPieces(fromIndex, index);
+        div.classList.remove("drag-over");
+        const from = parseInt(e.dataTransfer.getData("text/plain"));
+        swapPieces(from, index);
       });
 
-      // タッチドラッグ対応
-      piece.addEventListener("touchstart", e => {
-        if (e.touches.length !== 1) return;
-        const touch = e.touches[0];
-        piece.dataset.touchId = touch.identifier;
-        piece.dataset.touchStartX = touch.clientX;
-        piece.dataset.touchStartY = touch.clientY;
-        piece.dataset.origTransform = piece.style.transform || "translate(0,0)";
-        piece.style.transition = "none";
-        piece.classList.add("dragging");
-      }, { passive: false });
-
-      piece.addEventListener("touchmove", e => {
-        if (!piece.classList.contains("dragging")) return;
-        for (let touch of e.changedTouches) {
-          if (touch.identifier == piece.dataset.touchId) {
-            const dx = touch.clientX - piece.dataset.touchStartX;
-            const dy = touch.clientY - piece.dataset.touchStartY;
-            piece.style.transform = `translate(${dx}px, ${dy}px)`;
-            e.preventDefault(); // 重要: スクロールを止める
-          }
-        }
-      }, { passive: false });
-
-      piece.addEventListener("touchend", e => {
-        if (!piece.classList.contains("dragging")) return;
-        for (let touch of e.changedTouches) {
-          if (touch.identifier == piece.dataset.touchId) {
-            piece.style.transition = '';
-            piece.style.transform = '';
-            piece.classList.remove("dragging");
-
-            // ドロップ位置のピース判定
-            const dropX = touch.clientX;
-            const dropY = touch.clientY;
-            const dropElem = document.elementFromPoint(dropX, dropY);
-            if (dropElem && dropElem.classList.contains("piece")) {
-              const fromIndex = piece.dataset.index;
-              const toIndex = dropElem.dataset.index;
-              if (fromIndex !== toIndex) {
-                swapPieces(fromIndex, toIndex);
-              }
-            }
-            piece.dataset.touchId = null;
-          }
-        }
-      }, { passive: true });
-
-      puzzle.appendChild(piece);
+      puzzle.appendChild(div);
     });
   }
+
+  // タッチ対応
+  let touchIndex = null;
+  puzzle.addEventListener("touchstart", e => {
+    const touched = document.elementFromPoint(
+      e.touches[0].clientX,
+      e.touches[0].clientY
+    );
+    if (touched?.classList.contains("piece")) {
+      touchIndex = parseInt(touched.dataset.index);
+    }
+  }, { passive: false });
+
+  puzzle.addEventListener("touchend", e => {
+    const target = document.elementFromPoint(
+      e.changedTouches[0].clientX,
+      e.changedTouches[0].clientY
+    );
+    if (target?.classList.contains("piece")) {
+      const toIndex = parseInt(target.dataset.index);
+      if (touchIndex !== null && toIndex !== null && touchIndex !== toIndex) {
+        swapPieces(touchIndex, toIndex);
+      }
+    }
+    touchIndex = null;
+  }, { passive: false });
 
   function swapPieces(from, to) {
     [pieces[from], pieces[to]] = [pieces[to], pieces[from]];
-    initPuzzle(false);
+    updatePuzzle();
     checkSolved();
   }
 
+  function updatePuzzle() {
+    [...puzzle.children].forEach((div, i) => {
+      const pos = pieces[i];
+      const x = (pos % GRID) * -PIECE_SIZE;
+      const y = Math.floor(pos / GRID) * -PIECE_SIZE;
+      div.style.backgroundPosition = `${x}px ${y}px`;
+      div.dataset.correct = pos;
+    });
+  }
+
   function checkSolved() {
-    const solved = pieces.every((pos, i) => pos === i);
-    if (solved) {
+    const isCorrect = pieces.every((pos, i) => pos === i);
+    if (isCorrect) {
       message.textContent = "かんせい！すごーい！🎉";
-      showCelebration();
+      startConfetti();
       setTimeout(() => {
-        imageIndex = (imageIndex + 1) % imageList.length;
+        currentImageIndex = (currentImageIndex + 1) % images.length;
         initPuzzle();
-      }, 5000);
-    } else {
-      message.textContent = "";
+      }, 3000);
     }
   }
 
-  // 花火演出
-  const canvas = document.getElementById('fireworks');
-  const ctx = canvas.getContext('2d');
-  let particles = [];
-  let animationFrameId;
-
-  function showCelebration() {
-    resizeCanvas();
-    createParticles();
-    animateFireworks();
-    setTimeout(() => cancelAnimationFrame(animationFrameId), 4000);
-  }
-
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  function createParticles() {
-    particles = [];
+  function startConfetti() {
     for (let i = 0; i < 100; i++) {
-      particles.push({
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        vx: (Math.random() - 0.5) * 10,
-        vy: (Math.random() - 0.5) * 10,
-        alpha: 1,
-        radius: Math.random() * 3 + 2
-      });
+      const div = document.createElement("div");
+      div.style.left = Math.random() * 100 + "vw";
+      div.style.background = `hsl(${Math.random() * 360}, 100%, 80%)`;
+      div.style.animationDelay = Math.random() * 2 + "s";
+      confetti.appendChild(div);
     }
   }
-
-  function animateFireworks() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= 0.02;
-    });
-    particles = particles.filter(p => p.alpha > 0);
-    ctx.fillStyle = "#ff69b4";
-    particles.forEach(p => {
-      ctx.globalAlpha = p.alpha;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    if (particles.length > 0) {
-      animationFrameId = requestAnimationFrame(animateFireworks);
-    }
-  }
-
-  window.addEventListener('resize', resizeCanvas);
 
   initPuzzle();
 </script>
