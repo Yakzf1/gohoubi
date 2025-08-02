@@ -36,7 +36,7 @@
     }
     #puzzle {
       display: grid;
-      gap: 6px;
+      gap: 4px;
       margin: 0 auto 20px auto;
       width: max-content;
       touch-action: none;
@@ -94,8 +94,7 @@
 </head>
 <body>
 
-<h1>ジグソーパズル💖 ver 1.1.0</h1>
-<button onclick="initPuzzle()">スタート</button>
+<h1>ジグソーパズル💖 ver 1.1.5</h1>
 <div id="puzzle"></div>
 <p id="message"></p>
 <div class="confetti" id="confetti"></div>
@@ -108,13 +107,27 @@
   const message = document.getElementById("message");
   const confetti = document.getElementById("confetti");
 
-  const images = [
+  // パズル画像の元データ
+  let images = [
+    "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_05_sp.png",
+    "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_01_sp.png",
+    "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_02_sp.png",
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_03_sp.png",
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_04_sp.png",
+    "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_05_sp.png",
+    "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_06_sp.png",
     "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png",
     "https://aipri.jp/anime/wp/wp-content/themes/aipri_anime_v2/assets/images/common/character/img_character_mitsuki_2.png",
     "https://aipri.jp/anime/wp/wp-content/themes/aipri_anime_v2/assets/images/common/character/img_character_himari_2.png",
-    "https://prcdn.freetls.fastly.net/release_image/16719/1888/16719-1888-5d50af19f4f56167f8ac68d1f632b722-2500x2500.jpg?width=1950&height=1350&quality=85%2C65&format=jpeg&auto=webp&fit=bounds&bg-color=fff",
+    "https://statics.tver.jp/images/content/thumbnail/episode/xlarge/epbwhvdsiw.jpg?v=17",
+    "https://d34gglw95p9zsk.cloudfront.net/articles/images/000/032/949/large/3725bf48-42b8-4bd8-b477-92aa9e652c34.jpg?1746198450",
+    "https://cdn-ak.f.st-hatena.com/images/fotolife/h/hisonobi/20250601/20250601140203.jpg",
+    "https://www.toei-anim.co.jp/tv/wonderful_precure/assets/images/character/curewonderful/p_character01_style01_sp.webp",
+    "https://www.toei-anim.co.jp/tv/wonderful_precure/assets/images/character/curewonderful/p_character03_style01_sp.webp",
+    "https://d34gglw95p9zsk.cloudfront.net/articles/images/000/028/977/large/21fbfcee-b44a-454a-9f4f-17357845be79.jpg?1716553831",
+    "https://youpouch.com/wp-content/uploads/sites/4/2024/07/sub2_804d79.jpg",
+    "https://i.ytimg.com/vi/EZXK7TMhrG0/hqdefault.jpg",
+    "https://i.ytimg.com/vi/hGwxzmx86fw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAN-PpEnihSdj3BKuhN-HLK-0y4rQ",
   ];
   let currentImageIndex = 0;
   let pieces = [];
@@ -170,7 +183,6 @@
       });
 
       // タッチ用イベント
-
       div.addEventListener("touchstart", e => {
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
@@ -250,7 +262,7 @@
   function checkSolved() {
     const isCorrect = pieces.every((pos, i) => pos === i);
     if (isCorrect) {
-      message.textContent = "かんせい！すごーい！🎉";
+      message.textContent = "かんせい！すごーい！🎉" + '\n' + (currentImageIndex + 1) + "こ くりあ！";
       startConfetti();
       setTimeout(() => {
         currentImageIndex = (currentImageIndex + 1) % images.length;
@@ -271,7 +283,42 @@
     }
   }
 
-  initPuzzle();
+  async function checkImages(images) {
+    const validImages = [];
+
+    const checks = images.map((url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          validImages.push(url);
+          resolve();
+        };
+        img.onerror = () => {
+          resolve();
+        };
+        img.src = url;
+      });
+    });
+
+    await Promise.all(checks);
+    return validImages;
+  }
+
+  async function start() {
+    images = [...new Set(images)];
+    images = await checkImages(images);
+    if (images.length === 0) {
+      message.textContent = "画像が見つかりませんでした😭";
+      return;
+    }
+    images = shuffle(images);
+    initPuzzle();
+  }  
+
+  // 初期動作 
+  // －－－－－－－－－－－－－－－－－
+  start();
+  
 </script>
 
 </body>
