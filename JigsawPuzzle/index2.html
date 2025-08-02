@@ -34,7 +34,6 @@
       box-shadow: 0 4px 6px rgba(255, 119, 169, 0.5);
       transition: background 0.3s ease;
       margin-bottom: 20px;
-      user-select: none;
     }
 
     button:hover {
@@ -43,8 +42,6 @@
 
     #puzzle {
       display: grid;
-      grid-template-columns: repeat(3, var(--piece-size));
-      grid-template-rows: repeat(3, var(--piece-size));
       gap: 6px;
       margin: 0 auto 20px auto;
       width: max-content;
@@ -52,21 +49,13 @@
     }
 
     .piece {
-      width: var(--piece-size);
-      height: var(--piece-size);
       background-size: var(--image-size) var(--image-size);
       border-radius: 15px;
       border: 2px solid #ffb6c1;
       box-shadow: 0 6px 10px rgba(255, 182, 193, 0.5);
-      cursor: grab;
-      transition: transform 0.2s ease;
       user-select: none;
-    }
-
-    .piece:active {
-      cursor: grabbing;
-      transform: scale(1.05);
-      box-shadow: 0 10px 15px rgba(255, 182, 193, 0.8);
+      position: relative;
+      touch-action: none;
     }
 
     .drag-over {
@@ -81,23 +70,14 @@
       color: #e91e63;
       text-shadow: 1px 1px 2px #ffc0cbaa;
       min-height: 2rem;
-      user-select: none;
-      animation: messageFlash 1s infinite alternate;
     }
 
-    canvas#fireworks {
+    canvas {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
       pointer-events: none;
-      z-index: 9999;
-    }
-
-    @keyframes messageFlash {
-      0%, 100% { color: #e91e63; text-shadow: 0 0 10px #ff4081; }
-      50% { color: #ff4081; text-shadow: 0 0 20px #f48fb1; }
+      z-index: 1000;
     }
   </style>
 </head>
@@ -105,34 +85,33 @@
 
 <h1>ジグソーパズル💖</h1>
 <button onclick="initPuzzle()">スタート</button>
-<canvas id="fireworks"></canvas>
 <div id="puzzle"></div>
 <p id="message"></p>
+<canvas id="confetti"></canvas>
 
 <script>
-  const GRID_SIZE = 4;                   
-  const IMAGE_SIZE = 600;               
+  const GRID_SIZE = 3;
+  const IMAGE_SIZE = 600;
   const PIECE_SIZE = IMAGE_SIZE / GRID_SIZE;
 
-  const puzzle = document.getElementById("puzzle");
-  const message = document.getElementById("message");
   const imageList = [
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_03_sp.png",
     "https://precure-web.com/you-and-idol/assets/images/top/p_top-mv_04_sp.png",
     "https://precure-web.com/delicious-party/assets/img/character/p_01_style4b_sp.png"
   ];
-  let imageIndex = 0;
 
+  let currentImageIndex = 0;
   let pieces = [];
+  const puzzle = document.getElementById("puzzle");
+  const message = document.getElementById("message");
+  const canvas = document.getElementById("confetti");
+  const ctx = canvas.getContext("2d");
 
-  function setCSSVariables() {
-    document.documentElement.style.setProperty('--piece-size', PIECE_SIZE + 'px');
-    document.documentElement.style.setProperty('--image-size', IMAGE_SIZE + 'px');
-    puzzle.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
-    puzzle.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
-  }
+  document.documentElement.style.setProperty('--piece-size', PIECE_SIZE + 'px');
+  document.documentElement.style.setProperty('--image-size', IMAGE_SIZE + 'px');
 
-  setCSSVariables();
+  puzzle.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
+  puzzle.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${PIECE_SIZE}px)`;
 
   function shuffle(array) {
     for (let i = array.length -1; i > 0; i--) {
@@ -143,6 +122,7 @@
   }
 
   function initPuzzle(shufflePieces = true) {
+    const imageURL = imageList[currentImageIndex];
     if (shufflePieces) {
       pieces = shuffle([...Array(GRID_SIZE * GRID_SIZE).keys()]);
     }
@@ -152,46 +132,56 @@
     pieces.forEach((pos, index) => {
       const piece = document.createElement("div");
       piece.className = "piece";
-      piece.draggable = true;
-      piece.dataset.index = index;
-      piece.dataset.correct = pos;
-      piece.style.backgroundImage = `url(${imageList[imageIndex]})`;
+      piece.style.width = PIECE_SIZE + "px";
+      piece.style.height = PIECE_SIZE + "px";
+      piece.style.backgroundImage = `url(${imageURL})`;
       const x = (pos % GRID_SIZE) * -PIECE_SIZE;
       const y = Math.floor(pos / GRID_SIZE) * -PIECE_SIZE;
       piece.style.backgroundPosition = `${x}px ${y}px`;
+      piece.dataset.index = index;
+      piece.dataset.correct = pos;
 
-      piece.addEventListener("dragstart", e => {
-        e.dataTransfer.setData("text/plain", index);
+      // タッチ＆マウス対応
+      let isDragging = false;
+      let startX, startY;
+      let draggedPiece;
+
+      piece.addEventListener("pointerdown", e => {
+        isDragging = true;
+        draggedPiece = e.target;
+        startX = e.clientX;
+        startY = e.clientY;
+        draggedPiece.style.zIndex = 100;
+        draggedPiece.style.position = "absolute";
+        document.body.appendChild(draggedPiece);
       });
 
-      piece.addEventListener("dragover", e => {
-        e.preventDefault();
-        piece.classList.add("drag-over");
+      window.addEventListener("pointermove", e => {
+        if (isDragging && draggedPiece) {
+          draggedPiece.style.left = (e.clientX - PIECE_SIZE / 2) + "px";
+          draggedPiece.style.top = (e.clientY - PIECE_SIZE / 2) + "px";
+        }
       });
 
-      piece.addEventListener("dragleave", () => {
-        piece.classList.remove("drag-over");
-      });
+      window.addEventListener("pointerup", e => {
+        if (isDragging && draggedPiece) {
+          isDragging = false;
 
-      piece.addEventListener("drop", e => {
-        e.preventDefault();
-        piece.classList.remove("drag-over");
-        const fromIndex = e.dataTransfer.getData("text/plain");
-        swapPieces(fromIndex, index);
-      });
+          const dropIndex = [...puzzle.children].findIndex(el => {
+            const rect = el.getBoundingClientRect();
+            return e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom;
+          });
 
-      // タッチ対応
-      piece.addEventListener("touchstart", e => {
-        e.target.classList.add("drag-over");
-        e.target.dataset.touchIndex = index;
-      });
-
-      piece.addEventListener("touchend", e => {
-        const fromIndex = document.querySelector(".drag-over")?.dataset.touchIndex;
-        const toIndex = index;
-        document.querySelectorAll(".drag-over").forEach(p => p.classList.remove("drag-over"));
-        if (fromIndex !== undefined && fromIndex !== toIndex.toString()) {
-          swapPieces(fromIndex, toIndex);
+          if (dropIndex !== -1) {
+            const fromIndex = draggedPiece.dataset.index;
+            swapPieces(fromIndex, dropIndex);
+          }
+          draggedPiece.style.position = "";
+          draggedPiece.style.left = "";
+          draggedPiece.style.top = "";
+          draggedPiece.style.zIndex = "";
+          puzzle.appendChild(draggedPiece);
+          draggedPiece = null;
         }
       });
 
@@ -209,9 +199,9 @@
     const solved = pieces.every((pos, i) => pos === i);
     if (solved) {
       message.textContent = "かんせい！すごーい！🎉";
-      showCelebration();
+      showConfetti();
       setTimeout(() => {
-        imageIndex = (imageIndex + 1) % imageList.length;
+        currentImageIndex = (currentImageIndex + 1) % imageList.length;
         initPuzzle();
       }, 5000);
     } else {
@@ -219,60 +209,44 @@
     }
   }
 
-  // 花火演出
-  const canvas = document.getElementById('fireworks');
-  const ctx = canvas.getContext('2d');
-  let particles = [];
-  let animationFrameId;
-
-  function showCelebration() {
-    resizeCanvas();
-    createParticles();
-    animateFireworks();
-    setTimeout(() => cancelAnimationFrame(animationFrameId), 4000);
-  }
-
-  function resizeCanvas() {
+  function showConfetti() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-  }
 
-  function createParticles() {
-    particles = [];
-    for (let i = 0; i < 100; i++) {
-      particles.push({
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        vx: (Math.random() - 0.5) * 10,
-        vy: (Math.random() - 0.5) * 10,
-        alpha: 1,
-        radius: Math.random() * 3 + 2
+    const particles = Array.from({ length: 100 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 6 + 4,
+      dx: (Math.random() - 0.5) * 4,
+      dy: Math.random() * -4 - 2,
+      color: `hsl(${Math.random() * 360}, 100%, 75%)`
+    }));
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
       });
     }
-  }
 
-  function animateFireworks() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= 0.02;
-    });
-    particles = particles.filter(p => p.alpha > 0);
-    ctx.fillStyle = "#ff69b4";
-    particles.forEach(p => {
-      ctx.globalAlpha = p.alpha;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    if (particles.length > 0) {
-      animationFrameId = requestAnimationFrame(animateFireworks);
+    function update() {
+      particles.forEach(p => {
+        p.x += p.dx;
+        p.y += p.dy;
+        p.dy += 0.1;
+      });
     }
-  }
 
-  window.addEventListener('resize', resizeCanvas);
+    let count = 0;
+    const interval = setInterval(() => {
+      draw();
+      update();
+      if (++count > 60) clearInterval(interval);
+    }, 50);
+  }
 
   initPuzzle();
 </script>

@@ -181,10 +181,11 @@
       });
 
       // タッチ対応
-      // piece.addEventListener("touchstart", e => {
-      //   e.target.classList.add("drag-over");
-      //   e.target.dataset.touchIndex = index;
-      // });
+      piece.addEventListener("touchstart", e => {
+        e.target.classList.add("drag-over");
+        e.target.dataset.touchIndex = index;
+      });
+      
       piece.addEventListener("touchstart", e => {
         e.preventDefault();
         e.target.dispatchEvent(new MouseEvent("mousedown", {
