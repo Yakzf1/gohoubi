@@ -110,7 +110,7 @@
 <p id="message"></p>
 
 <script>
-  const GRID_SIZE = 4;                   
+  const GRID_SIZE = 3;                   
   const IMAGE_SIZE = 600;               
   const PIECE_SIZE = IMAGE_SIZE / GRID_SIZE;
 
@@ -184,14 +184,7 @@
       piece.addEventListener("touchstart", e => {
         e.target.classList.add("drag-over");
         e.target.dataset.touchIndex = index;
-      });
-      
-      piece.addEventListener("touchstart", e => {
-        e.preventDefault();
-        e.target.dispatchEvent(new MouseEvent("mousedown", {
-          bubbles: true
-        }));
-      });      
+      });  
 
       piece.addEventListener("touchend", e => {
         const fromIndex = document.querySelector(".drag-over")?.dataset.touchIndex;
