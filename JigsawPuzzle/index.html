@@ -182,15 +182,37 @@
 
       // タッチ対応
       piece.addEventListener("touchstart", e => {
-        e.target.classList.add("drag-over");
-        e.target.dataset.touchIndex = index;
-      });  
+        const touch = e.touches[0];
+        piece.classList.add("dragging");
+        piece.dataset.touchId = touch.identifier;
+        piece.dataset.startX = touch.clientX;
+        piece.dataset.startY = touch.clientY;
+        piece.dataset.index = index;
+        piece.style.position = "absolute";
+        piece.style.zIndex = 1000;
+        piece.style.pointerEvents = "none"; // 下のピースが取得できるように
+      }, { passive: true });
+
+      piece.addEventListener("touchmove", e => {
+        const touch = e.touches[0];
+        if (touch.identifier != piece.dataset.touchId) return;
+        const dx = touch.clientX - piece.dataset.startX;
+        const dy = touch.clientY - piece.dataset.startY;
+        piece.style.transform = `translate(${dx}px, ${dy}px)`;
+      }, { passive: true });
 
       piece.addEventListener("touchend", e => {
-        const fromIndex = document.querySelector(".drag-over")?.dataset.touchIndex;
-        const toIndex = index;
-        document.querySelectorAll(".drag-over").forEach(p => p.classList.remove("drag-over"));
-        if (fromIndex !== undefined && fromIndex !== toIndex.toString()) {
+        piece.style.transform = "";
+        piece.style.position = "";
+        piece.style.zIndex = "";
+        piece.style.pointerEvents = "";
+        piece.classList.remove("dragging");
+
+        const fromIndex = piece.dataset.index;
+        const touch = e.changedTouches[0];
+        const toElem = document.elementFromPoint(touch.clientX, touch.clientY);
+        const toIndex = toElem?.dataset?.index;
+        if (toIndex !== undefined && fromIndex !== toIndex) {
           swapPieces(fromIndex, toIndex);
         }
       });
