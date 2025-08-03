@@ -6,6 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
+    @media (max-width: 768px) {
+      #puzzle-wrapper {
+        transform: scale(0.95);
+        transform-origin: top center;
+      }
+    }
+    @media (max-width: 480px) {
+      #puzzle-wrapper {
+        transform: scale(0.7);
+        transform-origin: top center;
+      }
+    }    
     body {
       font-family: 'Yomogi', cursive;
       background: #fff0f6;
@@ -38,20 +50,17 @@
       background: #ff4d8d;
     }
     #puzzle-container {
-      display: none;
+      display: flex;
       justify-content: center;
       align-items: center;
-      /* width: 100vw;
-      height: 100vh; */
-      position: relative;
       flex-direction: column;
-      margin-top: 10px;
+      width: 100%;
+      overflow-x: auto;
     }
     #puzzle-wrapper {
       position: relative;
-      width: fit-content;
-      height: fit-content;
-      user-select: none;
+      margin: 0 auto;
+      max-width: 100%;
     }
     #puzzle {
       display: grid;
@@ -61,6 +70,7 @@
       border-radius: 15px;
       background: transparent;
       user-select: none;
+      margin: 0 auto;
     }
     #hint-image {
       position: absolute;
@@ -139,7 +149,7 @@
 </head>
 <body>
 
-<h1>ジグソーパズル💖 ver 1.2.1</h1>
+<h1>ジグソーパズル💖 ver 1.2.4</h1>
 
 <div id="start-screen">
   <h2>むずかしさを えらんでね 💕</h2>
