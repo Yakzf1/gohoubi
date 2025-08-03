@@ -6,18 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
-    @media (max-width: 768px) {
-      #puzzle-wrapper {
-        transform: scale(0.95);
-        transform-origin: top center;
-      }
-    }
-    @media (max-width: 480px) {
-      #puzzle-wrapper {
-        transform: scale(0.7);
-        transform-origin: top center;
-      }
-    }    
     body {
       font-family: 'Yomogi', cursive;
       background: #fff0f6;
@@ -50,16 +38,16 @@
       background: #ff4d8d;
     }
     #puzzle-container {
-      display: flex;
       justify-content: center;
       align-items: center;
       flex-direction: column;
       width: 100%;
-      overflow-x: auto;
+      overflow-x: hidden;
     }
     #puzzle-wrapper {
       position: relative;
       margin: 0 auto;
+      align-items: center;
       max-width: 100%;
     }
     #puzzle {
@@ -172,6 +160,13 @@
 <script>
   let GRID = 3;
   let SIZE = 600;
+  if (window.innerWidth <= 480) {
+    SIZE = 400; // スマホ向け
+  } else if (window.innerWidth <= 768) {
+    SIZE = 700; // タブレット向け
+  } else {
+    SIZE = 800; // PC向け
+  }
   let PIECE_SIZE = SIZE / GRID;
   const puzzle = document.getElementById("puzzle");
   const message = document.getElementById("message");
@@ -261,7 +256,7 @@
       div.style.width = PIECE_SIZE + "px";
       div.style.height = PIECE_SIZE + "px";
       div.style.backgroundImage = `url(${images[currentImageIndex]})`;
-      // 背景位置は元画像サイズ(600x600)に合わせて
+      div.style.backgroundSize = SIZE + "px " + SIZE + "px";      
       const x = (pos % GRID) * -PIECE_SIZE;
       const y = Math.floor(pos / GRID) * -PIECE_SIZE;
       div.style.backgroundPosition = `${x}px ${y}px`;
