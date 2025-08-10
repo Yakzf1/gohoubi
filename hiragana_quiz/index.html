@@ -22,31 +22,24 @@
 		margin: 20px auto;
 		display: block;
 	}
+	#puzzle {
+		user-select: none;
+	}
 	#puzzle span {
 		display: inline-block;
 		padding: 10px 15px;
 		margin: 5px;
-		font-size: 2rem;
+		font-size: 1.5rem;
 		background: #ffcccc;
 		border-radius: 10px;
 		cursor: grab;
-		user-select: none;
 		transition: transform 0.2s;
 		position: relative;
 	}
-	#puzzle span.dragging {
-		opacity: 0.5;
-	}
-	/* 正解時のアニメーション */
 	#puzzle span.correct {
 		animation: sparkle 0.8s ease-in-out;
 		border: 2px solid gold;
 		background: #fff8dc;
-	}
-	@keyframes sparkle {
-		0% { transform: scale(1); box-shadow: 0 0 0px gold; }
-		50% { transform: scale(1.2); box-shadow: 0 0 15px gold; }
-		100% { transform: scale(1); box-shadow: 0 0 0px gold; }
 	}
 	#message {
 		font-size: 2rem;
@@ -72,13 +65,18 @@
 		opacity: 0.8;
 		animation: fall linear forwards;
 	}
-	h1 {
+    h1 {
 		font-family: 'Yomogi', cursive;
 		font-size: 3rem;
-		color: #ff69b4; /* ピンクっぽい可愛い色 */
+		color: #ff69b4;
 		text-shadow: 1px 1px 2px #ffa6c9;
 		margin-top: 30px;
 		margin-bottom: 10px;
+    }
+	@keyframes sparkle {
+		0% { transform: scale(1); box-shadow: 0 0 0px gold; }
+		50% { transform: scale(1.2); box-shadow: 0 0 15px gold; }
+		100% { transform: scale(1); box-shadow: 0 0 0px gold; }
 	}
 	@keyframes fall {
 		to {
@@ -114,30 +112,34 @@
 		{ answer: "さくらんぼ", img: "https://nureyon.com/sample/95/cherry-1-p2.svg?1714209205" },
 		{ answer: "ゆきだるま", img: "https://t4.ftcdn.net/jpg/05/43/33/93/360_F_543339311_zEPmUxqPWXuU9wvNtDkwbS6z2hQUNuHG.jpg" },
 		{ answer: "こーら", img: "https://sozaberi.com/wp-content/uploads/2023/04/sb_drink_cola01.png" },
-		{ answer: "みかん", img: "https://www.kaigo-antenna.jp/uploads/illustration/main_image/794/webp_202107_014_s.webp" }
+		{ answer: "みかん", img: "https://www.kaigo-antenna.jp/uploads/illustration/main_image/794/webp_202107_014_s.webp" },
 	];
 
 	let currentQuestion;
 	let currentImageIndex = -1;
 	let letters = [];
 	let dragSrcIndex = null;
+	let dragClone = null;
+	let dragOffsetX = 0;
+	let dragOffsetY = 0;
+    let isAnimating = false;  // 追加：操作可能フラグ
 
 	function startGame() {
-		currentImageIndex++;
-		let index = currentImageIndex % questions.length;
-		currentQuestion = questions[index];
-		const imgEl = document.getElementById("question-img");
-		imgEl.src = currentQuestion.img;
+		currentImageIndex = (currentImageIndex + 1) % questions.length;
+		currentQuestion = questions[currentImageIndex];
+		document.getElementById("question-img").src = currentQuestion.img;
 
+		// 画像読み込み失敗時
+		const imgEl = document.getElementById("question-img");
 		imgEl.onerror = () => {
-			// 画像読み込みエラーなら次の問題へ
 			startGame();
 		};
 
+		// 文字をシャッフル（元と同じ並びにならないように）
 		letters = currentQuestion.answer.split("");
 		do {
 			shuffleArray(letters);
-		} while (letters.join("") === currentQuestion.answer);
+		} while (letters.join('') === currentQuestion.answer);
 
 		createPuzzle();
 		document.getElementById("message").textContent = "";
@@ -159,78 +161,105 @@
 			span.textContent = letter;
 			span.dataset.index = index;
 
-			// マウスドラッグ用
-			span.draggable = true;
-			span.addEventListener("dragstart", (e) => {
-				dragSrcIndex = Number(e.target.dataset.index);
-				// 空のドラッグ画像作成（ドラッグ画像の遅延防止）
-				const crt = document.createElement("canvas");
-				e.dataTransfer.setDragImage(crt, 0, 0);
-				e.target.classList.add("dragging");
-			});
-			span.addEventListener("dragend", (e) => {
-				e.target.classList.remove("dragging");
-			});
-			span.addEventListener("dragover", (e) => e.preventDefault());
-			span.addEventListener("drop", (e) => {
-				e.preventDefault();
-				const tgtIndex = Number(e.target.dataset.index);
-				swapAndCheck(dragSrcIndex, tgtIndex);
-			});
+			function onDragStart(e) {
+                if (isAnimating) return;  // アニメ中は操作無効
+				dragSrcIndex = index;
 
-			// タッチ用
-			let touchStartX, touchStartY;
-			span.addEventListener("touchstart", (e) => {
-				const touch = e.touches[0];
-				touchStartX = touch.clientX;
-				touchStartY = touch.clientY;
-				dragSrcIndex = Number(e.target.dataset.index);
-				e.target.classList.add("dragging");
-				e.target.style.zIndex = 1000;
-			}, { passive: false });
+				// クローン作成
+				dragClone = span.cloneNode(true);
+				dragClone.style.position = "fixed";
+				dragClone.style.pointerEvents = "none";
+				dragClone.style.opacity = "0.7";
+				dragClone.style.zIndex = "10000";
+				dragClone.style.width = span.offsetWidth + "px";
+				dragClone.style.height = span.offsetHeight + "px";
 
-			span.addEventListener("touchmove", (e) => {
-				e.preventDefault(); // スクロール防止
-				const touch = e.touches[0];
-				const dx = touch.clientX - touchStartX;
-				const dy = touch.clientY - touchStartY;
-				e.target.style.transform = `translate(${dx}px, ${dy}px)`;
-			}, { passive: false });
-
-			span.addEventListener("touchend", (e) => {
-				e.target.classList.remove("dragging");
-				e.target.style.zIndex = "";
-				e.target.style.transform = "";
-
-				const touch = e.changedTouches[0];
-				const targetX = touch.clientX;
-
-				// 横方向だけの入れ替え判定
-
-				const spans = [...document.querySelectorAll("#puzzle span")];
-				const srcIndex = dragSrcIndex;
-				const srcRect = spans[srcIndex].getBoundingClientRect();
-				const centerY = srcRect.top + srcRect.height / 2;
-
-				let closestIndex = srcIndex;
-				let closestDistance = Infinity;
-
-				spans.forEach((span, idx) => {
-					if (idx === srcIndex) return;
-					const rect = span.getBoundingClientRect();
-					// Y座標は無視
-					const centerSpanX = rect.left + rect.width / 2;
-					const distX = Math.abs(centerSpanX - targetX);
-					if (distX < closestDistance) {
-						closestDistance = distX;
-						closestIndex = idx;
-					}
-				});
-
-				if (closestIndex !== srcIndex) {
-					swapAndCheck(srcIndex, closestIndex);
+				let clientX, clientY;
+				if (e.type.startsWith("touch")) {
+					clientX = e.touches[0].clientX;
+					clientY = e.touches[0].clientY;
+				} else {
+					clientX = e.clientX;
+					clientY = e.clientY;
 				}
-			});
+
+				const rect = span.getBoundingClientRect();
+				dragOffsetX = clientX - rect.left;
+				dragOffsetY = clientY - rect.top;
+
+				moveDragClone(clientX, clientY);
+
+				document.body.appendChild(dragClone);
+
+				// 元のspanは透明化
+				span.style.opacity = "0.3";
+
+				if (e.type === "mousedown") {
+					window.addEventListener("mousemove", onDragMove);
+					window.addEventListener("mouseup", onDragEnd);
+				} else if (e.type === "touchstart") {
+					window.addEventListener("touchmove", onDragMove, { passive: false });
+					window.addEventListener("touchend", onDragEnd);
+				}
+				e.preventDefault();
+			}
+
+			function onDragMove(e) {
+				let clientX, clientY;
+				if (e.type === "touchmove") {
+					clientX = e.touches[0].clientX;
+					clientY = e.touches[0].clientY;
+					e.preventDefault();
+				} else {
+					clientX = e.clientX;
+					clientY = e.clientY;
+				}
+				moveDragClone(clientX, clientY);
+			}
+
+			function moveDragClone(x, y) {
+				if (!dragClone) return;
+				dragClone.style.left = (x - dragOffsetX) + "px";
+				dragClone.style.top = (y - dragOffsetY) + "px";
+			}
+
+			function onDragEnd(e) {
+				let clientX, clientY;
+				if (e.type === "touchend") {
+					clientX = e.changedTouches[0].clientX;
+					clientY = e.changedTouches[0].clientY;
+				} else {
+					clientX = e.clientX;
+					clientY = e.clientY;
+				}
+
+				if (dragClone) {
+					dragClone.remove();
+					dragClone = null;
+				}
+
+				span.style.opacity = "";
+
+				if (e.type === "mouseup") {
+					window.removeEventListener("mousemove", onDragMove);
+					window.removeEventListener("mouseup", onDragEnd);
+				} else if (e.type === "touchend") {
+					window.removeEventListener("touchmove", onDragMove);
+					window.removeEventListener("touchend", onDragEnd);
+				}
+
+				// ドロップ先要素取得
+				const targetEl = document.elementFromPoint(clientX, clientY);
+				if (targetEl && targetEl.dataset && targetEl.dataset.index !== undefined) {
+					const tgtIndex = Number(targetEl.dataset.index);
+					if (tgtIndex !== dragSrcIndex) {
+						swapAndCheck(dragSrcIndex, tgtIndex);
+					}
+				}
+			}
+
+			span.addEventListener("mousedown", onDragStart);
+			span.addEventListener("touchstart", onDragStart, { passive: false });
 
 			container.appendChild(span);
 		});
@@ -244,12 +273,16 @@
 
 	function checkAnswer() {
 		if (letters.join("") === currentQuestion.answer) {
+            isAnimating = true;  // アニメーション開始で操作無効化
 			document.getElementById("message").textContent = "せいかい！🎉";
 			document.querySelectorAll("#puzzle span").forEach(el => {
 				el.classList.add("correct");
 			});
 			launchConfetti();
-			setTimeout(startGame, 2500);
+            setTimeout(() => {
+                isAnimating = false;  // アニメ終了で操作可能に戻す
+                startGame();
+            }, 2500);
 		}
 	}
 
