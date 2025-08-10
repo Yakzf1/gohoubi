@@ -100,7 +100,7 @@
         { answer: "りんご", img: "https://sozai.bookclick.jp/wp-content/uploads/2023/04/apple-illustration.png" },
         { answer: "くるま", img: "https://illustimage.com/photo/748.png" },
         { answer: "さかな", img: "https://iconbu.com/wp-content/uploads/2022/07/%E3%81%8A%E9%AD%9A%E3%81%95%E3%82%93.jpg" },
-        { answer: "きゅうきゅうしゃ", img: "https://thumb.ac-illust.com/f5/f56429f98ec14e97c6756a449dfb3c10_t.jpeg" },
+        // { answer: "きゅうきゅうしゃ", img: "https://thumb.ac-illust.com/f5/f56429f98ec14e97c6756a449dfb3c10_t.jpeg" },
         { answer: "いちご", img: "https://illustimage.com/photo/2415.png" },
         { answer: "かばん", img: "https://tsukatte.com/wp-content/uploads/2019/12/tote-bag_red.png" },
         { answer: "はなび", img: "https://sozai-good.com/uploads/87243/87243_thumbnail.png" },
@@ -170,33 +170,64 @@
         letters.forEach((letter, index) => {
             const span = document.createElement("span");
             span.textContent = letter;
-            span.draggable = true;
             span.dataset.index = index;
+            span.style.position = "relative";
 
+            // ---- マウス用 ----
+            span.draggable = true;
             span.addEventListener("dragstart", (e) => {
                 dragSrcIndex = e.target.dataset.index;
                 e.target.classList.add("dragging");
             });
-
             span.addEventListener("dragend", (e) => {
                 e.target.classList.remove("dragging");
             });
-
-            span.addEventListener("dragover", (e) => {
-                e.preventDefault();
-            });
-
+            span.addEventListener("dragover", (e) => e.preventDefault());
             span.addEventListener("drop", (e) => {
                 e.preventDefault();
-                const dropIndex = e.target.dataset.index;
-                [letters[dragSrcIndex], letters[dropIndex]] =
-                    [letters[dropIndex], letters[dragSrcIndex]];
-                createPuzzle();
-                checkAnswer();
+                swapAndCheck(dragSrcIndex, e.target.dataset.index);
+            });
+
+            // ---- タッチ用 ----
+            let touchStartX, touchStartY;
+            span.addEventListener("touchstart", (e) => {
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                dragSrcIndex = e.target.dataset.index;
+                e.target.classList.add("dragging");
+                e.target.style.zIndex = 1000;
+            }, { passive: false });
+
+            span.addEventListener("touchmove", (e) => {
+                e.preventDefault(); // スクロール防止
+                const touch = e.touches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+                e.target.style.transform = `translate(${dx}px, ${dy}px)`;
+            }, { passive: false });
+
+            span.addEventListener("touchend", (e) => {
+                e.target.classList.remove("dragging");
+                e.target.style.zIndex = "";
+                e.target.style.transform = "";
+
+                // 指を離した位置にある要素を取得
+                const touch = e.changedTouches[0];
+                const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (targetEl && targetEl.dataset && targetEl.dataset.index !== undefined) {
+                    swapAndCheck(dragSrcIndex, targetEl.dataset.index);
+                }
             });
 
             container.appendChild(span);
         });
+    }
+
+    function swapAndCheck(a, b) {
+        [letters[a], letters[b]] = [letters[b], letters[a]];
+        createPuzzle();
+        checkAnswer();
     }
 
     function checkAnswer() {
