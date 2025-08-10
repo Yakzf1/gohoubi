@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ひらがなパズル</title>
 <style>
 	body {
@@ -20,7 +19,8 @@
 		border: 2px solid #ccc;
 		border-radius: 10px;
 		background: #fff;
-		margin: 20px;
+		margin: 20px auto;
+		display: block;
 	}
 	#puzzle span {
 		display: inline-block;
@@ -32,6 +32,7 @@
 		cursor: grab;
 		user-select: none;
 		transition: transform 0.2s;
+		position: relative;
 	}
 	#puzzle span.dragging {
 		opacity: 0.5;
@@ -71,14 +72,14 @@
 		opacity: 0.8;
 		animation: fall linear forwards;
 	}
-    h1 {
-    font-family: 'Yomogi', cursive;
-    font-size: 3rem;
-    color: #ff69b4; /* ピンクっぽい可愛い色 */
-    text-shadow: 1px 1px 2px #ffa6c9;
-    margin-top: 30px;
-    margin-bottom: 10px;
-    }    
+	h1 {
+		font-family: 'Yomogi', cursive;
+		font-size: 3rem;
+		color: #ff69b4; /* ピンクっぽい可愛い色 */
+		text-shadow: 1px 1px 2px #ffa6c9;
+		margin-top: 30px;
+		margin-bottom: 10px;
+	}
 	@keyframes fall {
 		to {
 			transform: translateY(100vh) rotate(360deg);
@@ -90,178 +91,187 @@
 <body>
 
 <h1>ひらがなパズル</h1>
-<img id="question-img" src="" alt="クイズ画像">
+<img id="question-img" src="" alt="クイズ画像" />
 <div id="puzzle"></div>
 <div id="message"></div>
 <div id="confetti-container"></div>
 
 <script>
-    let questions = [
-        { answer: "りんご", img: "https://sozai.bookclick.jp/wp-content/uploads/2023/04/apple-illustration.png" },
-        { answer: "くるま", img: "https://illustimage.com/photo/748.png" },
-        { answer: "さかな", img: "https://iconbu.com/wp-content/uploads/2022/07/%E3%81%8A%E9%AD%9A%E3%81%95%E3%82%93.jpg" },
-        // { answer: "きゅうきゅうしゃ", img: "https://thumb.ac-illust.com/f5/f56429f98ec14e97c6756a449dfb3c10_t.jpeg" },
-        { answer: "いちご", img: "https://illustimage.com/photo/2415.png" },
-        { answer: "かばん", img: "https://tsukatte.com/wp-content/uploads/2019/12/tote-bag_red.png" },
-        { answer: "はなび", img: "https://sozai-good.com/uploads/87243/87243_thumbnail.png" },
-        { answer: "くつした", img: "https://eiyoushi-hutaba.com/wp-content/uploads/2021/06/%E9%9D%B4%E4%B8%8B.png" },
-        { answer: "とけい", img: "https://illustkun.com/wp-content/uploads/illustkun-05689-clock.png" },
-        { answer: "おにぎり", img: "https://creatime.net/wp-content/uploads/2023/09/riceball.png" },
-        { answer: "たまご", img: "https://tsukatte.com/wp-content/uploads/2020/02/egg_ec.png" },
-        { answer: "ぬいぐるみ", img: "https://tsukatte.com/wp-content/uploads/2021/01/stuffed-bear_lightbrown.png" },
-        { answer: "しゃぼんだま", img: "https://thumb.ac-illust.com/ba/ba70a47e761cf3ed71a1fb508044e0dc_t.jpeg" },
-        { answer: "ちょうちょ", img: "https://irasutogakari.com/wp-content/uploads/2021/01/sozai-358.png" },
-        { answer: "さくらんぼ", img: "https://nureyon.com/sample/95/cherry-1-p2.svg?1714209205" },
-        { answer: "ゆきだるま", img: "https://t4.ftcdn.net/jpg/05/43/33/93/360_F_543339311_zEPmUxqPWXuU9wvNtDkwbS6z2hQUNuHG.jpg" },
-        { answer: "こーら", img: "https://sozaberi.com/wp-content/uploads/2023/04/sb_drink_cola01.png" },
-        { answer: "みかん", img: "https://www.kaigo-antenna.jp/uploads/illustration/main_image/794/webp_202107_014_s.webp" },
-        { answer: "ぼうし", img: "ｘｘｘ" },
-        { answer: "はなびら", img: "ｘｘｘ" },
-        { answer: "はっぱ", img: "ｘｘｘ" },
-        { answer: "たんぽぽ", img: "ｘｘｘ" },
-        { answer: "かささぎ", img: "ｘｘｘ" },
-        { answer: "あさがお", img: "ｘｘｘ" },
-        { answer: "おにわ", img: "ｘｘｘ" },
-        { answer: "とまと", img: "ｘｘｘ" },
-        { answer: "くつひも", img: "ｘｘｘ" },
-        { answer: "かぼちゃ", img: "ｘｘｘ" },
-    ];
+	let questions = [
+		{ answer: "りんご", img: "https://sozai.bookclick.jp/wp-content/uploads/2023/04/apple-illustration.png" },
+		{ answer: "くるま", img: "https://illustimage.com/photo/748.png" },
+		{ answer: "さかな", img: "https://iconbu.com/wp-content/uploads/2022/07/%E3%81%8A%E9%AD%9A%E3%81%95%E3%82%93.jpg" },
+		{ answer: "いちご", img: "https://illustimage.com/photo/2415.png" },
+		{ answer: "かばん", img: "https://tsukatte.com/wp-content/uploads/2019/12/tote-bag_red.png" },
+		{ answer: "はなび", img: "https://sozai-good.com/uploads/87243/87243_thumbnail.png" },
+		{ answer: "くつした", img: "https://eiyoushi-hutaba.com/wp-content/uploads/2021/06/%E9%9D%B4%E4%B8%8B.png" },
+		{ answer: "とけい", img: "https://illustkun.com/wp-content/uploads/illustkun-05689-clock.png" },
+		{ answer: "おにぎり", img: "https://creatime.net/wp-content/uploads/2023/09/riceball.png" },
+		{ answer: "たまご", img: "https://tsukatte.com/wp-content/uploads/2020/02/egg_ec.png" },
+		{ answer: "ぬいぐるみ", img: "https://tsukatte.com/wp-content/uploads/2021/01/stuffed-bear_lightbrown.png" },
+		{ answer: "しゃぼんだま", img: "https://thumb.ac-illust.com/ba/ba70a47e761cf3ed71a1fb508044e0dc_t.jpeg" },
+		{ answer: "ちょうちょ", img: "https://irasutogakari.com/wp-content/uploads/2021/01/sozai-358.png" },
+		{ answer: "さくらんぼ", img: "https://nureyon.com/sample/95/cherry-1-p2.svg?1714209205" },
+		{ answer: "ゆきだるま", img: "https://t4.ftcdn.net/jpg/05/43/33/93/360_F_543339311_zEPmUxqPWXuU9wvNtDkwbS6z2hQUNuHG.jpg" },
+		{ answer: "こーら", img: "https://sozaberi.com/wp-content/uploads/2023/04/sb_drink_cola01.png" },
+		{ answer: "みかん", img: "https://www.kaigo-antenna.jp/uploads/illustration/main_image/794/webp_202107_014_s.webp" }
+	];
 
-    let currentQuestion;
-    let currentImageIndex = -1;
-    let letters = [];
-    let dragSrcIndex = null;
+	let currentQuestion;
+	let currentImageIndex = -1;
+	let letters = [];
+	let dragSrcIndex = null;
 
-    function startGame() {
-        currentImageIndex = currentImageIndex + 1;
-        
-        // ランダムに問題選択 
-        let index = (currentImageIndex + 1) % 25;
-        currentQuestion = questions[index];
-        document.getElementById("question-img").src = currentQuestion.img;
+	function startGame() {
+		currentImageIndex++;
+		let index = currentImageIndex % questions.length;
+		currentQuestion = questions[index];
+		const imgEl = document.getElementById("question-img");
+		imgEl.src = currentQuestion.img;
 
-        // 画像読み込み失敗時の処理
-        const imgEl = document.getElementById("question-img");
-        imgEl.onerror = () => {
-            startGame();
-        };
+		imgEl.onerror = () => {
+			// 画像読み込みエラーなら次の問題へ
+			startGame();
+		};
 
-        // 文字をシャッフル
-        letters = currentQuestion.answer.split("");
-        do {
-            shuffleArray(letters);
-        } while (letters.join('') === currentQuestion.answer)
-        
-        createPuzzle();
-        document.getElementById("message").textContent = "";
-    }
+		letters = currentQuestion.answer.split("");
+		do {
+			shuffleArray(letters);
+		} while (letters.join("") === currentQuestion.answer);
 
-    function shuffleArray(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-    }
+		createPuzzle();
+		document.getElementById("message").textContent = "";
+	}
 
-    function createPuzzle() {
-        const container = document.getElementById("puzzle");
-        container.innerHTML = "";
+	function shuffleArray(arr) {
+		for (let i = arr.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[arr[i], arr[j]] = [arr[j], arr[i]];
+		}
+	}
 
-        letters.forEach((letter, index) => {
-            const span = document.createElement("span");
-            span.textContent = letter;
-            span.dataset.index = index;
-            span.style.position = "relative";
+	function createPuzzle() {
+		const container = document.getElementById("puzzle");
+		container.innerHTML = "";
 
-            // ---- マウス用 ----
-            span.draggable = true;
-            span.addEventListener("dragstart", (e) => {
-                dragSrcIndex = e.target.dataset.index;
-                e.target.classList.add("dragging");
-            });
-            span.addEventListener("dragend", (e) => {
-                e.target.classList.remove("dragging");
-            });
-            span.addEventListener("dragover", (e) => e.preventDefault());
-            span.addEventListener("drop", (e) => {
-                e.preventDefault();
-                swapAndCheck(dragSrcIndex, e.target.dataset.index);
-            });
+		letters.forEach((letter, index) => {
+			const span = document.createElement("span");
+			span.textContent = letter;
+			span.dataset.index = index;
 
-            // ---- タッチ用 ----
-            let touchStartX, touchStartY;
-            span.addEventListener("touchstart", (e) => {
-                const touch = e.touches[0];
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                dragSrcIndex = e.target.dataset.index;
-                e.target.classList.add("dragging");
-                e.target.style.zIndex = 1000;
-            }, { passive: false });
+			// マウスドラッグ用
+			span.draggable = true;
+			span.addEventListener("dragstart", (e) => {
+				dragSrcIndex = Number(e.target.dataset.index);
+				// 空のドラッグ画像作成（ドラッグ画像の遅延防止）
+				const crt = document.createElement("canvas");
+				e.dataTransfer.setDragImage(crt, 0, 0);
+				e.target.classList.add("dragging");
+			});
+			span.addEventListener("dragend", (e) => {
+				e.target.classList.remove("dragging");
+			});
+			span.addEventListener("dragover", (e) => e.preventDefault());
+			span.addEventListener("drop", (e) => {
+				e.preventDefault();
+				const tgtIndex = Number(e.target.dataset.index);
+				swapAndCheck(dragSrcIndex, tgtIndex);
+			});
 
-            span.addEventListener("touchmove", (e) => {
-                e.preventDefault(); // スクロール防止
-                const touch = e.touches[0];
-                const dx = touch.clientX - touchStartX;
-                const dy = touch.clientY - touchStartY;
-                e.target.style.transform = `translate(${dx}px, ${dy}px)`;
-            }, { passive: false });
+			// タッチ用
+			let touchStartX, touchStartY;
+			span.addEventListener("touchstart", (e) => {
+				const touch = e.touches[0];
+				touchStartX = touch.clientX;
+				touchStartY = touch.clientY;
+				dragSrcIndex = Number(e.target.dataset.index);
+				e.target.classList.add("dragging");
+				e.target.style.zIndex = 1000;
+			}, { passive: false });
 
-            span.addEventListener("touchend", (e) => {
-                e.target.classList.remove("dragging");
-                e.target.style.zIndex = "";
-                e.target.style.transform = "";
+			span.addEventListener("touchmove", (e) => {
+				e.preventDefault(); // スクロール防止
+				const touch = e.touches[0];
+				const dx = touch.clientX - touchStartX;
+				const dy = touch.clientY - touchStartY;
+				e.target.style.transform = `translate(${dx}px, ${dy}px)`;
+			}, { passive: false });
 
-                // 指を離した位置にある要素を取得
-                const touch = e.changedTouches[0];
-                const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (targetEl && targetEl.dataset && targetEl.dataset.index !== undefined) {
-                    swapAndCheck(dragSrcIndex, targetEl.dataset.index);
-                }
-            });
+			span.addEventListener("touchend", (e) => {
+				e.target.classList.remove("dragging");
+				e.target.style.zIndex = "";
+				e.target.style.transform = "";
 
-            container.appendChild(span);
-        });
-    }
+				const touch = e.changedTouches[0];
+				const targetX = touch.clientX;
 
-    function swapAndCheck(a, b) {
-        [letters[a], letters[b]] = [letters[b], letters[a]];
-        createPuzzle();
-        checkAnswer();
-    }
+				// 横方向だけの入れ替え判定
 
-    function checkAnswer() {
-        if (letters.join("") === currentQuestion.answer) {
-            document.getElementById("message").textContent = "せいかい！🎉";
-            // 正解アニメーション
-            document.querySelectorAll("#puzzle span").forEach(el => {
-                el.classList.add("correct");
-            });
-            // 紙吹雪
-            launchConfetti();
-            setTimeout(startGame, 2500); // 2.5秒後に次の問題
-        }
-    }
+				const spans = [...document.querySelectorAll("#puzzle span")];
+				const srcIndex = dragSrcIndex;
+				const srcRect = spans[srcIndex].getBoundingClientRect();
+				const centerY = srcRect.top + srcRect.height / 2;
 
-    function launchConfetti() {
-        const confettiContainer = document.getElementById("confetti-container");
-        confettiContainer.innerHTML = "";
-        const colors = ["#ff0", "#0f0", "#0ff", "#f0f", "#f00", "#00f"];
-        const total = 50;
+				let closestIndex = srcIndex;
+				let closestDistance = Infinity;
 
-        for (let i = 0; i < total; i++) {
-            const confetti = document.createElement("div");
-            confetti.classList.add("confetti");
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.left = Math.random() * 100 + "vw";
-            confetti.style.animationDuration = (Math.random() * 2 + 2) + "s";
-            confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-            confettiContainer.appendChild(confetti);
-        }
-    }
+				spans.forEach((span, idx) => {
+					if (idx === srcIndex) return;
+					const rect = span.getBoundingClientRect();
+					// Y座標は無視
+					const centerSpanX = rect.left + rect.width / 2;
+					const distX = Math.abs(centerSpanX - targetX);
+					if (distX < closestDistance) {
+						closestDistance = distX;
+						closestIndex = idx;
+					}
+				});
 
-    shuffleArray(questions);
-    startGame();
+				if (closestIndex !== srcIndex) {
+					swapAndCheck(srcIndex, closestIndex);
+				}
+			});
+
+			container.appendChild(span);
+		});
+	}
+
+	function swapAndCheck(a, b) {
+		[letters[a], letters[b]] = [letters[b], letters[a]];
+		createPuzzle();
+		checkAnswer();
+	}
+
+	function checkAnswer() {
+		if (letters.join("") === currentQuestion.answer) {
+			document.getElementById("message").textContent = "せいかい！🎉";
+			document.querySelectorAll("#puzzle span").forEach(el => {
+				el.classList.add("correct");
+			});
+			launchConfetti();
+			setTimeout(startGame, 2500);
+		}
+	}
+
+	function launchConfetti() {
+		const confettiContainer = document.getElementById("confetti-container");
+		confettiContainer.innerHTML = "";
+		const colors = ["#ff0", "#0f0", "#0ff", "#f0f", "#f00", "#00f"];
+		const total = 50;
+
+		for (let i = 0; i < total; i++) {
+			const confetti = document.createElement("div");
+			confetti.classList.add("confetti");
+			confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+			confetti.style.left = Math.random() * 100 + "vw";
+			confetti.style.animationDuration = (Math.random() * 2 + 2) + "s";
+			confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+			confettiContainer.appendChild(confetti);
+		}
+	}
+
+	shuffleArray(questions);
+	startGame();
 </script>
 
 </body>
