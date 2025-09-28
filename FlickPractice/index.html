@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ふりっく れんしゅう がんばろう♪</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
+
+  body {
+    font-family: 'Yomogi', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fff0f5; /* 淡いピンク系 */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  header {
+    background: #ffc0cb; /* ピンク */
+    padding: 12px;
+    font-size: 1.3em;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  header span {
+    font-size: 0.75em;
+    font-weight: normal;
+    display: block;
+    margin-top: 4px;
+    color: #fff0f5;
+  }
+
+  .target {
+    font-size: 3em;
+    margin: 15px auto;
+    padding: 12px 20px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 8px rgba(255,192,203,0.3);
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .keyboard {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 4px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .key {
+    background: linear-gradient(145deg, #ffe4e1, #ffc0cb);
+    font-size: 2em;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .key:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .popup {
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    background: #ffe4e1;
+    border: 2px solid #ffc0cb;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    z-index: 10;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  }
+
+  .input-area {
+    margin: 10px 0;
+    font-size: 1.6em;
+    text-align: center;
+    color: #d147a3;
+    font-weight: bold;
+  }
+
+  .settings {
+    padding: 10px;
+    text-align: center;
+    font-size: 0.9em;
+  }
+
+  /* ポイント表示 */
+  div[style*="position: fixed"] {
+    background: #fff0f5;
+    padding: 5px 12px;
+    border-radius: 12px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    color: #ff69b4;
+  }
+</style>
+
+</head>
+<body>
+
+<header>
+  ひらがなフリック練習 — こどもモード<br>
+  <span style="font-size:0.7em;font-weight:normal;">大きなボタンで、タッチまたはフリック操作の練習ができます。</span>
+</header>
+
+<div class="target" id="target">あ</div>
+
+<div class="keyboard">
+  <div class="key" data-key="あ">あ</div>
+  <div class="key" data-key="か">か</div>
+  <div class="key" data-key="さ">さ</div>
+  <div class="key" data-key="た">た</div>
+  <div class="key" data-key="な">な</div>
+  <div class="key" data-key="は">は</div>
+  <div class="key" data-key="ま">ま</div>
+  <div class="key" data-key="や">や</div>
+  <div class="key" data-key="ら">ら</div>
+  <div class="key" data-key="゛">゛ ゜ 小</div>
+  <div class="key" data-key="わ">わ</div>
+</div>
+
+<div class="input-area">入力: <span id="input">ー</span></div>
+
+<div class="settings">
+  <label><input type="checkbox" id="sound"> 音あり</label>
+  <label><input type="checkbox" id="vibrate"> バイブ</label>
+</div>
+
+<script>
+const inputEl = document.getElementById('input');
+const targetEl = document.getElementById('target');
+const keys = document.querySelectorAll('.key');
+
+let currentInput = '';
+let baseInput = '';
+let currentIndex = 0;
+
+// 子供向けの単語リスト（10文字以内）
+const wordList = [
+  'りんご','ねこ','いぬ','さかな','はな','くるま','みかん','とり','うさぎ','そら',
+  'ふね','おに','かさ','てがみ','はし','こえ','つき','ひかり','ほし','やま',
+  'かわ','もり','たまご','にんじん','ばなな','みず','おちゃ','くも','あめ','ゆき',
+  'かぜ','ひつじ','うま','うみ','はなび','おかし','さくら','くもり','つち','きりん',
+  'さる','うし','ねずみ','いちご','ぶどう','もも','すいか','なし','ぶた','とまと',
+  'かぼちゃ','やさい','えんぴつ','ほん','つくえ','いす','とけい','かばん','ぼうし','てぶくろ',
+  'くつ','ずぼん','シャツ','ワンピース','くま','りす','しか','きつね','たぬき','かめ',
+  'さかな','えび','かに','たこ','いか','かえる','へび','とり','かもめ','かも',
+  'ひよこ','あひる','にわとり','あおむし','ちょう','はち','てんとうむし','かぶとむし','かまきり','とんぼ',
+  'かえる','みみず','かたつむり','いもむし','たんぽぽ','すみれ','ひまわり','あさがお','もみじ','たけのこ'
+];
+
+let currentWordIndex = 0;
+let targetWord = wordList[currentWordIndex];
+
+// ポイント管理
+let points = parseInt(localStorage.getItem('points')) || 0;
+
+// ポイント表示用
+const pointEl = document.createElement('div');
+pointEl.style.position = 'fixed';
+pointEl.style.top = '10px';
+pointEl.style.right = '10px';
+pointEl.style.fontSize = '1.2em';
+pointEl.style.fontWeight = 'bold';
+pointEl.textContent = `☆: ${points}`;
+document.body.appendChild(pointEl);
+
+// ターゲット単語を span で分割して表示
+function renderTarget() {
+  targetEl.innerHTML = '';
+  for (let i = 0; i < targetWord.length; i++) {
+    const span = document.createElement('span');
+    span.textContent = targetWord[i];
+    span.style.color = i === currentIndex ? 'red' : 'black';
+    targetEl.appendChild(span);
+  }
+}
+renderTarget();
+
+const FLICK_THRESHOLD = 30;
+const LONGPRESS_DELAY = 100;
+
+const flickMap = {
+  'あ': ['あ','い','う','え','お'],
+  'か': ['か','き','く','け','こ'],
+  'さ': ['さ','し','す','せ','そ'],
+  'た': ['た','ち','つ','て','と'],
+  'な': ['な','に','ぬ','ね','の'],
+  'は': ['は','ひ','ふ','へ','ほ'],
+  'ま': ['ま','み','む','め','も'],
+  'や': ['や','','ゆ','','よ'],
+  'ら': ['ら','り','る','れ','ろ'],
+  'わ': ['わ', 'を', 'ん', 'ー', ''] 
+};
+
+const dakutenMap = {
+  'か':'が','き':'ぎ','く':'ぐ','け':'げ','こ':'ご',
+  'さ':'ざ','し':'じ','す':'ず','せ':'ぜ','そ':'ぞ',
+  'た':'だ','ち':'ぢ','つ':'づ','て':'で','と':'ど',
+  'は':'ば','ひ':'び','ふ':'ぶ','へ':'べ','ほ':'ぼ'
+};
+
+const komojiMapu = {
+  'づ':'っ','や':'ゃ','ゆ':'ゅ','よ':'ょ'
+};
+
+const handakuMap = {
+  'ば':'ぱ','び':'ぴ','ぶ':'ぷ','べ':'ぺ','ぼ':'ぽ'
+};
+
+const baseMap = {
+  'が':'か','ぎ':'き','ぐ':'く','げ':'け','ご':'こ',
+  'ざ':'さ','じ':'し','ず':'す','ぜ':'せ','ぞ':'そ',
+  'だ':'た','ぢ':'ち','っ':'つ','で':'て','ど':'と',
+  'ぱ':'は','ぴ':'ひ','ぷ':'ふ','ぺ':'へ','ぽ':'ほ'
+};
+
+keys.forEach(key => {
+  let popupEls = [];
+  let touchStartX = 0, touchStartY = 0;
+  let longPressTimer;
+
+  key.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+
+    longPressTimer = setTimeout(() => {
+      const base = key.dataset.key;
+      if (flickMap[base]) {
+        const chars = flickMap[base];
+        popupEls = [];
+        const rect = key.getBoundingClientRect();
+        if (chars[1]) popupEls.push(makePopup('left', chars[1], rect, key));
+        if (chars[2]) popupEls.push(makePopup('up', chars[2], rect, key));
+        if (chars[3]) popupEls.push(makePopup('right', chars[3], rect, key));
+        if (chars[4]) popupEls.push(makePopup('down', chars[4], rect, key));
+      }
+    }, LONGPRESS_DELAY);
+  });
+
+  key.addEventListener('touchend', e => {
+    clearTimeout(longPressTimer);
+    popupEls.forEach(p => p.remove());
+    popupEls = [];
+
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    let char = key.dataset.key;
+
+    if (flickMap[char]) {
+      let dir = 0;
+      const distance = Math.sqrt(dx*dx + dy*dy);
+      if (distance < FLICK_THRESHOLD) dir = 0;
+      else {
+        const angle = Math.atan2(-dy, dx) * (180/Math.PI);
+        if (angle >= -45 && angle < 45) dir = 3;
+        else if (angle >= 45 && angle < 135) dir = 2;
+        else if (angle >= -135 && angle < -45) dir = 4;
+        else dir = 1;
+      }
+      char = flickMap[char][dir] || char;
+    }
+
+    // 濁点・半濁点・小文字 変換処理
+    if (char === '゛') {
+      if (currentInput) {
+        if (dakutenMap[currentInput]) currentInput = dakutenMap[currentInput];
+        else if (handakuMap[currentInput]) currentInput = handakuMap[currentInput];
+        else if (komojiMapu[currentInput]) currentInput = komojiMapu[currentInput];
+        else if (baseMap[currentInput]) currentInput = baseMap[currentInput];
+      }
+      baseInput = currentInput;
+      char = currentInput;
+    } else {
+      baseInput = char;
+      currentInput = char;
+    }
+
+    // ターゲット文字と比較
+    if (targetWord[currentIndex] === char) {
+      const spans = targetEl.querySelectorAll('span');
+      spans[currentIndex].style.color = 'gray';
+      currentIndex++;
+
+      // 次の文字があれば赤く
+      if (currentIndex < spans.length) spans[currentIndex].style.color = 'red';
+      else {
+        // 単語を全て入力したらポイント加算
+        points++;
+        localStorage.setItem('points', points);
+        pointEl.textContent = `ポイント: ${points}`;
+
+        // 次の単語に移行
+        currentWordIndex = (currentWordIndex + 1) % wordList.length;
+        targetWord = wordList[currentWordIndex];
+        currentIndex = 0;
+        renderTarget();
+      }
+    }
+
+    inputEl.textContent = currentInput;
+  });
+});
+
+function makePopup(direction, text, rect, parent) {
+  const popup = document.createElement('div');
+  popup.className = 'popup ' + direction;
+  popup.textContent = text;
+  parent.appendChild(popup);
+
+  const padding = 5;
+  const btnWidth = rect.width;
+  const btnHeight = rect.height;
+  const popupWidth = popup.offsetWidth;
+  const popupHeight = popup.offsetHeight;
+
+  let left = 0, top = 0;
+  switch(direction){
+    case 'up': left = btnWidth/2 - popupWidth/2; top = padding; break;
+    case 'down': left = btnWidth/2 - popupWidth/2; top = btnHeight - popupHeight - padding; break;
+    case 'left': left = padding; top = btnHeight/2 - popupHeight/2; break;
+    case 'right': left = btnWidth - popupWidth - padding; top = btnHeight/2 - popupHeight/2; break;
+  }
+
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+  return popup;
+}
+</script>
+
+
+</body>
+</html>
