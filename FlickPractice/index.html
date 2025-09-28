@@ -7,15 +7,16 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
 
-  body {
-    font-family: 'Yomogi', sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #fff0f5; /* 淡いピンク系 */
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
+body {
+  font-family: 'Yomogi', sans-serif;
+  margin: 0;
+  padding: 20px; /* 上下左右すべてに20pxの余白 */
+  background: #fff0f5; /* 淡いピンク系 */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box; /* paddingを含めて高さを計算 */
+}
 
   header {
     background: #ffc0cb; /* ピンク */
