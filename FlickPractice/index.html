@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ふりっく れんしゅう がんばろう♪</title>
+<title>ふりっくげーむ</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Yomogi&display=swap');
 
@@ -108,17 +108,37 @@
     box-shadow: 0 3px 6px rgba(0,0,0,0.15);
     color: #ff69b4;
   }
+
+  #input-wrapper {
+  display: inline-block;
+  font-size: 2em;
+  font-weight: bold;
+  color: #d147a3;
+  margin-right: 4px;      /* ターゲットに近づける */
+  vertical-align: middle;  /* 高さを揃える */
+}
+
+#target {
+  display: inline-block;
+  font-size: 3em;
+  padding: 12px 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(255,192,203,0.3);
+}
 </style>
 
 </head>
 <body>
 
 <header>
-  ひらがなフリック練習 — こどもモード<br>
-  <span style="font-size:0.7em;font-weight:normal;">大きなボタンで、タッチまたはフリック操作の練習ができます。</span>
+  ふりっくのれんしゅう がんばろう♪
 </header>
 
-<div class="target" id="target">あ</div>
+<div style="text-align: center; margin: 15px;">
+  <div id="input-wrapper" class="input-area">ー</div>
+  <div id="target" class="target">あ</div>
+</div>
 
 <div class="keyboard">
   <div class="key" data-key="あ">あ</div>
@@ -134,8 +154,6 @@
   <div class="key" data-key="わ">わ</div>
 </div>
 
-<div class="input-area">入力: <span id="input">ー</span></div>
-
 <script>
 const inputEl = document.getElementById('input');
 const targetEl = document.getElementById('target');
@@ -145,22 +163,33 @@ let currentInput = '';
 let baseInput = '';
 let currentIndex = 0;
 
-// 単語リスト（子供向け、10文字以内）
-const wordList = [
+// 濁点ボタンのテキスト設定
+let dakutenButtonText = '゛ ゜ 小';
+function updateDakutenButtonText(text){
+  // めんどいから作らない。
+  // 入力文字で次の候補を表示したいけど時間出来たら実装する。
+  dakutenButtonText = text;
+  keys.forEach(key => {
+    if(key.dataset.key === '゛') key.textContent = dakutenButtonText;
+  });
+}
+
+// 単語リスト（子供向け）
+let wordList = [
   'りんご','ねこ','いぬ','さかな','はな','くるま','みかん','とり','うさぎ','そら',
   'ふね','おに','かさ','てがみ','はし','こえ','つき','ひかり','ほし','やま',
   'かわ','もり','たまご','にんじん','ばなな','みず','おちゃ','くも','あめ','ゆき',
   'かぜ','ひつじ','うま','うみ','はなび','おかし','さくら','くもり','つち','きりん',
   'さる','うし','ねずみ','いちご','ぶどう','もも','すいか','なし','ぶた','とまと',
   'かぼちゃ','やさい','えんぴつ','ほん','つくえ','いす','とけい','かばん','ぼうし','てぶくろ',
-  'くつ','ずぼん','シャツ','ワンピース','くま','りす','しか','きつね','たぬき','かめ',
+  'くつ','ずぼん','しゃつ','わんぴーす','くま','りす','しか','きつね','たぬき','かめ',
   'さかな','えび','かに','たこ','いか','かえる','へび','とり','かもめ','かも',
   'ひよこ','あひる','にわとり','あおむし','ちょう','はち','てんとうむし','かぶとむし','かまきり','とんぼ',
   'かえる','みみず','かたつむり','いもむし','たんぽぽ','すみれ','ひまわり','あさがお','もみじ','たけのこ'
 ];
 
 let currentWordIndex = 0;
-let targetWord = wordList[currentWordIndex];
+let targetWord = "";
 
 // ポイント管理
 let points = parseInt(localStorage.getItem('points')) || 0;
@@ -173,7 +202,7 @@ pointEl.style.fontWeight = 'bold';
 pointEl.textContent = `☆: ${points}`;
 document.body.appendChild(pointEl);
 
-// ターゲット単語を span で分割して表示
+// target を span で分割して表示
 function renderTarget() {
   targetEl.innerHTML = '';
   for (let i = 0; i < targetWord.length; i++) {
@@ -182,8 +211,10 @@ function renderTarget() {
     span.style.color = i === currentIndex ? 'red' : 'black';
     targetEl.appendChild(span);
   }
+
+  const inputWrapperEl = document.getElementById('input-wrapper');
+  inputWrapperEl.textContent=targetWord.substring(0,currentIndex) + currentInput;
 }
-renderTarget();
 
 const FLICK_THRESHOLD = 30;
 const LONGPRESS_DELAY = 100;
@@ -207,15 +238,12 @@ const dakutenMap = {
   'た':'だ','ち':'ぢ','つ':'づ','て':'で','と':'ど',
   'は':'ば','ひ':'び','ふ':'ぶ','へ':'べ','ほ':'ぼ'
 };
-
-const komojiMapu = {
-  'づ':'っ','や':'ゃ','ゆ':'ゅ','よ':'ょ'
-};
-
 const handakuMap = {
   'ば':'ぱ','び':'ぴ','ぶ':'ぷ','べ':'ぺ','ぼ':'ぽ'
 };
-
+const komojiMapu = {
+  'づ':'っ','や':'ゃ','ゆ':'ゅ','よ':'ょ'
+};
 const baseMap = {
   'が':'か','ぎ':'き','ぐ':'く','げ':'け','ご':'こ',
   'ざ':'さ','じ':'し','ず':'す','ぜ':'せ','ぞ':'そ',
@@ -253,99 +281,115 @@ keys.forEach(key => {
     e.preventDefault();
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    if (Math.sqrt(dx*dx + dy*dy) > 5) moved = true;
+    if(Math.sqrt(dx*dx+dy*dy) > 5) moved = true;
   });
 
   key.addEventListener('touchend', e => {
     e.preventDefault();
     clearTimeout(longPressTimer);
-    popupEls.forEach(p => p.remove());
+    popupEls.forEach(p=>p.remove());
     popupEls = [];
 
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     let char = key.dataset.key;
 
-    if (flickMap[char] && moved) {
+    if(flickMap[char] && moved){
       let dir = 0;
-      const distance = Math.sqrt(dx*dx + dy*dy);
-      if (distance >= FLICK_THRESHOLD) {
-        const angle = Math.atan2(-dy, dx) * (180/Math.PI);
-        if (angle >= -45 && angle < 45) dir = 3;
-        else if (angle >= 45 && angle < 135) dir = 2;
-        else if (angle >= -135 && angle < -45) dir = 4;
-        else dir = 1;
+      const distance = Math.sqrt(dx*dx+dy*dy);
+      if(distance >= FLICK_THRESHOLD){
+        const angle = Math.atan2(-dy, dx)*(180/Math.PI);
+        if(angle>=-45 && angle<45) dir=3;
+        else if(angle>=45 && angle<135) dir=2;
+        else if(angle>=-135 && angle<-45) dir=4;
+        else dir=1;
       }
       char = flickMap[char][dir] || char;
     }
 
-    // 濁点・小文字処理
-    if (char === '゛') {
-      if (currentInput) {
-        if (dakutenMap[currentInput]) currentInput = dakutenMap[currentInput];
-        else if (handakuMap[currentInput]) currentInput = handakuMap[currentInput];
-        else if (komojiMapu[currentInput]) currentInput = komojiMapu[currentInput];
-        else if (baseMap[currentInput]) currentInput = baseMap[currentInput];
+    // 濁点・半濁点・小文字処理
+    if(char==='゛'){
+      updateDakutenButtonText('゛ ゜ 小');
+      if(currentInput){
+        if(dakutenMap[currentInput]) currentInput=dakutenMap[currentInput];
+        else if(handakuMap[currentInput]) currentInput=handakuMap[currentInput];
+        else if(komojiMapu[currentInput]) currentInput=komojiMapu[currentInput];
+        else if(baseMap[currentInput]) currentInput=baseMap[currentInput];
       }
-      baseInput = currentInput;
-      char = currentInput;
+      baseInput=currentInput;
+      char=currentInput;
     } else {
-      baseInput = char;
-      currentInput = char;
+      baseInput=char;
+      currentInput=char;
     }
 
     // ターゲット文字と比較
-    if (targetWord[currentIndex] === char) {
-      const spans = targetEl.querySelectorAll('span');
-      spans[currentIndex].style.color = 'gray';
+    if(targetWord[currentIndex]===char){
       currentIndex++;
-      if (currentIndex < spans.length) spans[currentIndex].style.color = 'red';
-      else {
+      currentInput='';
+      if(currentIndex>=targetWord.length){
         points++;
         localStorage.setItem('points', points);
-        pointEl.textContent = `☆: ${points}`;
-        currentWordIndex = (currentWordIndex + 1) % wordList.length;
-        targetWord = wordList[currentWordIndex];
-        currentIndex = 0;
-        renderTarget();
+        pointEl.textContent=`☆: ${points}`;
+        currentWordIndex=(currentWordIndex+1)%wordList.length;
+        targetWord=wordList[currentWordIndex];
+        currentIndex=0;
+        currentInput='';
       }
     }
 
-    inputEl.textContent = currentInput;
+    renderTarget();
   });
 });
 
-// ポップアップをボタン内側に表示
-function makePopup(direction, text, rect, parent) {
-  const popup = document.createElement('div');
-  popup.className = 'popup ' + direction;
-  popup.textContent = text;
-
-  // ポップアップもタッチ操作でスクロールしない
-  popup.addEventListener('touchstart', e => e.preventDefault());
-  popup.addEventListener('touchmove', e => e.preventDefault());
-  popup.addEventListener('touchend', e => e.preventDefault());
-
+// ポップアップ作成
+function makePopup(direction,text,rect,parent){
+  const popup=document.createElement('div');
+  popup.className='popup '+direction;
+  popup.textContent=text;
+  popup.addEventListener('touchstart',e=>e.preventDefault());
+  popup.addEventListener('touchmove',e=>e.preventDefault());
+  popup.addEventListener('touchend',e=>e.preventDefault());
   parent.appendChild(popup);
 
-  const padding = 5;
-  const btnWidth = rect.width;
-  const btnHeight = rect.height;
-  const popupWidth = popup.offsetWidth;
-  const popupHeight = popup.offsetHeight;
+  const padding=5;
+  const btnWidth=rect.width;
+  const btnHeight=rect.height;
+  const popupWidth=popup.offsetWidth;
+  const popupHeight=popup.offsetHeight;
 
-  let left = 0, top = 0;
+  let left=0,top=0;
   switch(direction){
-    case 'up': left = btnWidth/2 - popupWidth/2; top = padding; break;
-    case 'down': left = btnWidth/2 - popupWidth/2; top = btnHeight - popupHeight - padding; break;
-    case 'left': left = padding; top = btnHeight/2 - popupHeight/2; break;
-    case 'right': left = btnWidth - popupWidth - padding; top = btnHeight/2 - popupHeight/2; break;
+    case 'up': left=btnWidth/2-popupWidth/2; top=padding; break;
+    case 'down': left=btnWidth/2-popupWidth/2; top=btnHeight-popupHeight-padding; break;
+    case 'left': left=padding; top=btnHeight/2-popupHeight/2; break;
+    case 'right': left=btnWidth-popupWidth-padding; top=btnHeight/2-popupHeight/2; break;
   }
-
-  popup.style.left = left + 'px';
-  popup.style.top = top + 'px';
+  popup.style.left=left+'px';
+  popup.style.top=top+'px';
   return popup;
 }
+
+// 配列をランダム化
+function shuffleArray(array) {
+  const arr = array.slice(); // 元の配列をコピー
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); // 0〜i のランダム整数
+    [arr[i], arr[j]] = [arr[j], arr[i]]; // 要素を入れ替え
+  }
+  return arr;
+}
+
+// 初期化
+function initialize(){
+  wordList = shuffleArray(wordList);
+  targetWord = wordList[currentWordIndex];
+  updateDakutenButtonText(dakutenButtonText);
+  renderTarget();
+}
+
+// 初期処理
+initialize();
 </script>
 
 </body>
