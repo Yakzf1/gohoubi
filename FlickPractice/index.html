@@ -100,12 +100,6 @@
     font-weight: bold;
   }
 
-  .settings {
-    padding: 10px;
-    text-align: center;
-    font-size: 0.9em;
-  }
-
   /* ポイント表示 */
   div[style*="position: fixed"] {
     background: #fff0f5;
@@ -142,11 +136,6 @@
 
 <div class="input-area">入力: <span id="input">ー</span></div>
 
-<div class="settings">
-  <label><input type="checkbox" id="sound"> 音あり</label>
-  <label><input type="checkbox" id="vibrate"> バイブ</label>
-</div>
-
 <script>
 const inputEl = document.getElementById('input');
 const targetEl = document.getElementById('target');
@@ -156,7 +145,7 @@ let currentInput = '';
 let baseInput = '';
 let currentIndex = 0;
 
-// 子供向けの単語リスト（10文字以内）
+// 単語リスト（子供向け、10文字以内）
 const wordList = [
   'りんご','ねこ','いぬ','さかな','はな','くるま','みかん','とり','うさぎ','そら',
   'ふね','おに','かさ','てがみ','はし','こえ','つき','ひかり','ほし','やま',
@@ -175,8 +164,6 @@ let targetWord = wordList[currentWordIndex];
 
 // ポイント管理
 let points = parseInt(localStorage.getItem('points')) || 0;
-
-// ポイント表示用
 const pointEl = document.createElement('div');
 pointEl.style.position = 'fixed';
 pointEl.style.top = '10px';
@@ -240,8 +227,11 @@ keys.forEach(key => {
   let popupEls = [];
   let touchStartX = 0, touchStartY = 0;
   let longPressTimer;
+  let moved = false;
 
   key.addEventListener('touchstart', e => {
+    e.preventDefault();
+    moved = false;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
 
@@ -259,7 +249,15 @@ keys.forEach(key => {
     }, LONGPRESS_DELAY);
   });
 
+  key.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.sqrt(dx*dx + dy*dy) > 5) moved = true;
+  });
+
   key.addEventListener('touchend', e => {
+    e.preventDefault();
     clearTimeout(longPressTimer);
     popupEls.forEach(p => p.remove());
     popupEls = [];
@@ -268,11 +266,10 @@ keys.forEach(key => {
     const dy = e.changedTouches[0].clientY - touchStartY;
     let char = key.dataset.key;
 
-    if (flickMap[char]) {
+    if (flickMap[char] && moved) {
       let dir = 0;
       const distance = Math.sqrt(dx*dx + dy*dy);
-      if (distance < FLICK_THRESHOLD) dir = 0;
-      else {
+      if (distance >= FLICK_THRESHOLD) {
         const angle = Math.atan2(-dy, dx) * (180/Math.PI);
         if (angle >= -45 && angle < 45) dir = 3;
         else if (angle >= 45 && angle < 135) dir = 2;
@@ -282,7 +279,7 @@ keys.forEach(key => {
       char = flickMap[char][dir] || char;
     }
 
-    // 濁点・半濁点・小文字 変換処理
+    // 濁点・小文字処理
     if (char === '゛') {
       if (currentInput) {
         if (dakutenMap[currentInput]) currentInput = dakutenMap[currentInput];
@@ -302,16 +299,11 @@ keys.forEach(key => {
       const spans = targetEl.querySelectorAll('span');
       spans[currentIndex].style.color = 'gray';
       currentIndex++;
-
-      // 次の文字があれば赤く
       if (currentIndex < spans.length) spans[currentIndex].style.color = 'red';
       else {
-        // 単語を全て入力したらポイント加算
         points++;
         localStorage.setItem('points', points);
-        pointEl.textContent = `ポイント: ${points}`;
-
-        // 次の単語に移行
+        pointEl.textContent = `☆: ${points}`;
         currentWordIndex = (currentWordIndex + 1) % wordList.length;
         targetWord = wordList[currentWordIndex];
         currentIndex = 0;
@@ -323,10 +315,17 @@ keys.forEach(key => {
   });
 });
 
+// ポップアップをボタン内側に表示
 function makePopup(direction, text, rect, parent) {
   const popup = document.createElement('div');
   popup.className = 'popup ' + direction;
   popup.textContent = text;
+
+  // ポップアップもタッチ操作でスクロールしない
+  popup.addEventListener('touchstart', e => e.preventDefault());
+  popup.addEventListener('touchmove', e => e.preventDefault());
+  popup.addEventListener('touchend', e => e.preventDefault());
+
   parent.appendChild(popup);
 
   const padding = 5;
@@ -348,7 +347,6 @@ function makePopup(direction, text, rect, parent) {
   return popup;
 }
 </script>
-
 
 </body>
 </html>
