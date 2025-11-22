@@ -31,8 +31,8 @@
       gap: 5px 5px;
       width: fit-content;
       margin: 0 auto;
+      margin-bottom: 10px;
       border-bottom: 1px solid #000;
-      padding-bottom: 10px;
     }
     .ball {
       width: 40px;
@@ -224,6 +224,20 @@
         container.appendChild(btn);
       });
     }
+
+    // 右クリック禁止
+    document.addEventListener("contextmenu", function(e){
+      e.preventDefault();
+    });
+
+    // 長押しでの選択やメニュー表示を防止
+    document.addEventListener("touchstart", function(e){
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("touchmove", function(e){
+      e.preventDefault();
+    }, { passive: false });
 
     // 初回
     load();
