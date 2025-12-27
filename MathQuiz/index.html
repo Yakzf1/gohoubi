@@ -230,15 +230,6 @@
       e.preventDefault();
     });
 
-    // 長押しでの選択やメニュー表示を防止
-    document.addEventListener("touchstart", function(e){
-      e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener("touchmove", function(e){
-      e.preventDefault();
-    }, { passive: false });
-
     // 初回
     load();
     generateProblem();
