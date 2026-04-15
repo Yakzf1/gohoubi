@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>そろばんをやってみよう！</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(#ffeef5, #e0f7ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1920px;
+            max-height: 1080px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 1vh 1vw;
+            box-sizing: border-box;
+
+            /* 左右レイアウト */
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 1vw;
+        }
+
+        /* 左側（問題エリア） */
+        #left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #question {
+            font-size: 10vh;
+        }
+
+        #answer {
+            font-size: 8vh;
+            margin-top: 2vh;
+        }
+
+        button {
+            font-size: 5vh;
+            padding: 1vh 3vw;
+            border: none;
+            border-radius: 10px;
+            background: #66ccff;
+            color: white;
+            margin-top: 6vh;
+        }
+
+        #result {
+            font-size: 3vh;
+            margin-top: 2vh;
+        }
+
+        /* 右側（そろばん） */
+        #right {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #abacus {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6vw;
+            width: 100%;
+            height: 100%;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: space-evenly;
+            height: 80%;
+        }
+
+        .label {
+            font-size: 2vh;
+            text-align: center;
+            margin-top: 1vh;
+        }
+
+        .bead {
+            width: 9vh;
+            height: 9vh;
+            background: #ffcc66;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .bead.active {
+            background: #ff8844;
+            transform: translateY(-2vh);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game">
+
+        <div id="left">
+            <div id="question"></div>
+            <div id="answer">こたえ: 0</div>
+            <button onclick="checkAnswer()">こたえあわせ</button>
+            <div id="result"></div>
+        </div>
+
+        <div id="right">
+            <div id="abacus"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let num1, num2, correct;
+        let ones = [], tens = [];
+        let prevTens = 0;
+
+        function newQuestion() {
+            num1 = Math.floor(Math.random() * 9) + 1;
+            num2 = Math.floor(Math.random() * 9) + 1;
+            correct = num1 + num2;
+
+            document.getElementById('question').innerText = `${num1} + ${num2} = ?`;
+            document.getElementById('result').innerText = '';
+
+            createAbacus();
+        }
+
+        function createColumn(arr) {
+            const col = document.createElement('div');
+            col.className = 'column';
+
+            for (let i = 0; i < 9; i++) {
+                const bead = document.createElement('div');
+                bead.className = 'bead';
+
+                bead.addEventListener('click', () => {
+                    const reversed = [...arr].reverse(); // 上→下順にする
+                    const index = reversed.indexOf(bead);
+
+                    if (!bead.classList.contains('active')) {
+                        const canActivate = reversed
+                            .slice(0, index)
+                            .every(b => b.classList.contains('active'));
+
+                        if (!canActivate) return;
+
+                        bead.classList.add('active');
+                    } else {
+                        reversed.slice(index).forEach(b => b.classList.remove('active'));
+                    }
+
+                    updateAnswer();
+                });
+
+                col.appendChild(bead);
+                arr.push(bead);
+            }
+
+            return col;
+        }
+
+        function createAbacus() {
+            const abacus = document.getElementById('abacus');
+            abacus.innerHTML = '';
+            ones = [];
+            tens = [];
+            prevTens = 0;
+
+            const tensCol = createColumn(tens);
+            const onesCol = createColumn(ones);
+
+            const tensWrap = document.createElement('div');
+            tensWrap.appendChild(tensCol);
+            const tensLabel = document.createElement('div');
+            tensLabel.innerText = '10のくらい';
+            tensLabel.className = 'label';
+            tensWrap.appendChild(tensLabel);
+
+            const onesWrap = document.createElement('div');
+            onesWrap.appendChild(onesCol);
+            const onesLabel = document.createElement('div');
+            onesLabel.innerText = '1のくらい';
+            onesLabel.className = 'label';
+            onesWrap.appendChild(onesLabel);
+
+            abacus.appendChild(tensWrap);
+            abacus.appendChild(onesWrap);
+
+            updateAnswer();
+        }
+
+        function updateAnswer() {
+            let oneCount = ones.filter(b => b.classList.contains('active')).length;
+            let tenCount = tens.filter(b => b.classList.contains('active')).length;
+
+            // 10の位が増えたら1の位リセット
+            if (tenCount > prevTens) {
+                ones.forEach(b => b.classList.remove('active'));
+                oneCount = 0;
+            }
+
+            // 10の位が減ったら → 1の位すべてON
+            if (tenCount < prevTens) {
+                ones.forEach(b => b.classList.add('active'));
+                oneCount = ones.length;
+            }
+
+            prevTens = tenCount;
+
+            let total = tenCount * 10 + oneCount;
+            document.getElementById('answer').innerText = `こたえ: ${total}`;
+        }
+
+        function checkAnswer() {
+            let oneCount = ones.filter(b => b.classList.contains('active')).length;
+            let tenCount = tens.filter(b => b.classList.contains('active')).length;
+            let user = tenCount * 10 + oneCount;
+
+            if (user === correct) {
+                document.getElementById('result').innerText = 'せいかい！ 🎉';
+                setTimeout(newQuestion, 1200);
+            } else {
+                document.getElementById('result').innerText = 'ちがうよ 😢';
+            }
+        }
+
+        newQuestion();
+    </script>
+</body>
+
+</html>
