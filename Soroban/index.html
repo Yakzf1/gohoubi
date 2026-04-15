@@ -78,6 +78,7 @@
             gap: 6vw;
             width: 100%;
             height: 100%;
+            overflow: hidden;
         }
 
         .column {
@@ -85,7 +86,7 @@
             flex-direction: column-reverse;
             align-items: center;
             justify-content: space-evenly;
-            height: 80%;
+            height: 100%;
         }
 
         .label {
@@ -106,11 +107,22 @@
             background: #ff8844;
             transform: translateY(-2vh);
         }
+
+        #score {
+            position: absolute;
+            top: 1vh;
+            right: 2vw;
+            font-size: 3vh;
+            font-weight: bold;
+            color: #ff6fa5;
+        }        
     </style>
 </head>
 
 <body>
     <div id="game">
+
+        <div id="score">☆いいこポイント: 0</div>
 
         <div id="left">
             <div id="question"></div>
@@ -129,6 +141,7 @@
         let num1, num2, correct;
         let ones = [], tens = [];
         let prevTens = 0;
+        let score = 0;
 
         function newQuestion() {
             num1 = Math.floor(Math.random() * 9) + 1;
@@ -234,10 +247,15 @@
 
             if (user === correct) {
                 document.getElementById('result').innerText = 'せいかい！ 🎉';
+                score = score + 2;
                 setTimeout(newQuestion, 1200);
             } else {
                 document.getElementById('result').innerText = 'ちがうよ 😢';
+                score = score -1;
+                if(score < 0) score = 0;
             }
+
+            document.getElementById('score').innerText = `☆いいこポイント: ${score}`;
         }
 
         newQuestion();
