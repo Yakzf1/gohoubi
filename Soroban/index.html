@@ -125,7 +125,7 @@
             text-align: center;
         }
 
-        .oneslabel {
+        .onesLabel {
             font-size: 2.5vh;
             font-weight: bold;
             margin-top: 1vh;
@@ -160,11 +160,20 @@
         let score = 0;
 
         function newQuestion() {
+            operator = Math.random() < 0.5 ? '+' : '-';
+
             num1 = Math.floor(Math.random() * 9) + 1;
             num2 = Math.floor(Math.random() * 9) + 1;
-            correct = num1 + num2;
 
-            document.getElementById('question').innerText = `${num1} + ${num2} = ?`;
+            if (operator === '+') {
+                correct = num1 + num2;
+            } else {
+                // マイナスでマイナス結果にならないように
+                if (num1 < num2) [num1, num2] = [num2, num1];
+                correct = num1 - num2;
+            }
+
+            document.getElementById('question').innerText = `${num1} ${operator} ${num2} = ?`;
             document.getElementById('result').innerText = '';
 
             createAbacus();
@@ -226,8 +235,8 @@
             onesWrap.appendChild(onesCol);
             const onesLabel = document.createElement('div');
             onesLabel.innerText = '0';
-            onesLabel.className = 'oneslabel';
-            onesLabel.id = 'oneslabel';
+            onesLabel.className = 'onesLabel';
+            onesLabel.id = 'onesLabel';
             onesWrap.appendChild(onesLabel);
 
             abacus.appendChild(tensWrap);
@@ -255,11 +264,11 @@
                 tenCount++;
             }
 
-            // 10の位が減ったら → 1の位すべてON
-            if (tenCount < prevTens) {
+            // 10の位が0に減ったら → 1の位すべてON
+            if (prevTens >= 1 && tenCount == 0) {
                 ones.forEach(b => b.classList.add('active'));
                 ones[0].classList.remove('active')
-                oneCount = ones.length-1;
+                oneCount = 9;
             }
 
             prevTens = tenCount;
@@ -281,6 +290,7 @@
 
             if (user === correct) {
                 document.getElementById('result').innerText = 'せいかい！ 🎉';
+                document.getElementById('question').innerText = `${num1} ${operator} ${num2} = ${correct}`;
                 score = score + 2;
                 setTimeout(newQuestion, 1200);
             } else {
