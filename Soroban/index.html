@@ -45,7 +45,7 @@
         }
 
         #answer {
-            font-size: 8vh;
+            font-size: 2vh;
             margin-top: 2vh;
         }
 
@@ -78,7 +78,7 @@
             gap: 6vw;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            padding: 2vh 0;
         }
 
         .column {
@@ -96,8 +96,8 @@
         }
 
         .bead {
-            width: 9vh;
-            height: 9vh;
+            width: min(7.5vh, 7.5vw);
+            height: min(7.5vh, 7.5vw);
             background: #ffcc66;
             border-radius: 50%;
             cursor: pointer;
@@ -126,7 +126,7 @@
 
         <div id="left">
             <div id="question"></div>
-            <div id="answer">こたえ: 0</div>
+            <div id="answer">こたえ を こえにだして いってみよう！</div>
             <button onclick="checkAnswer()">こたえあわせ</button>
             <div id="result"></div>
         </div>
@@ -158,7 +158,7 @@
             const col = document.createElement('div');
             col.className = 'column';
 
-            for (let i = 0; i < 9; i++) {
+            for (let i = 0; i < 10; i++) {
                 const bead = document.createElement('div');
                 bead.className = 'bead';
 
@@ -222,22 +222,32 @@
             let oneCount = ones.filter(b => b.classList.contains('active')).length;
             let tenCount = tens.filter(b => b.classList.contains('active')).length;
 
-            // 10の位が増えたら1の位リセット
-            if (tenCount > prevTens) {
+            // 1の位が10になったら10の位を増やして1の位リセット
+            if (oneCount === 10) {
                 ones.forEach(b => b.classList.remove('active'));
                 oneCount = 0;
+
+                // 10の位を+1（順番ルールに従ってON）
+                for (let bead of [...tens].reverse()) {
+                    if (!bead.classList.contains('active')) {
+                        bead.classList.add('active');
+                        break;
+                    }
+                }
+                tenCount++;
             }
 
             // 10の位が減ったら → 1の位すべてON
             if (tenCount < prevTens) {
                 ones.forEach(b => b.classList.add('active'));
-                oneCount = ones.length;
+                ones[0].classList.remove('active')
+                oneCount = ones.length-1;
             }
 
             prevTens = tenCount;
 
             let total = tenCount * 10 + oneCount;
-            document.getElementById('answer').innerText = `こたえ: ${total}`;
+            // document.getElementById('answer').innerText = `こたえ: ${total}`;
         }
 
         function checkAnswer() {
