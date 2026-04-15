@@ -200,7 +200,13 @@
 
                         bead.classList.add('active');
                     } else {
-                        reversed.slice(index).forEach(b => b.classList.remove('active'));
+                        // 1つずつしか減らせないようにする
+                        const activeBeads = reversed.filter(b => b.classList.contains('active'));
+                        const lastActive = activeBeads[activeBeads.length - 1];
+
+                        if (bead !== lastActive) return;
+
+                        bead.classList.remove('active');                        
                     }
 
                     updateAnswer();
@@ -273,6 +279,7 @@
 
             prevTens = tenCount;
 
+            // ラベルを更新
             let label = document.getElementById('tensLabel');
             if (label) {
                 label.innerText = tenCount;
