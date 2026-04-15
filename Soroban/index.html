@@ -41,7 +41,7 @@
         }
 
         #question {
-            font-size: 10vh;
+            font-size: 11vh;
         }
 
         #answer {
@@ -60,7 +60,7 @@
         }
 
         #result {
-            font-size: 3vh;
+            font-size: 5vh;
             margin-top: 2vh;
         }
 
@@ -115,6 +115,22 @@
             font-size: 3vh;
             font-weight: bold;
             color: #ff6fa5;
+        }   
+        
+        .tensLabel {
+            font-size: 2.5vh;
+            font-weight: bold;
+            margin-top: 1vh;
+            align-content: center;
+            text-align: center;
+        }
+
+        .oneslabel {
+            font-size: 2.5vh;
+            font-weight: bold;
+            margin-top: 1vh;
+            align-content: center;
+            text-align: center;
         }        
     </style>
 </head>
@@ -201,15 +217,17 @@
             const tensWrap = document.createElement('div');
             tensWrap.appendChild(tensCol);
             const tensLabel = document.createElement('div');
-            tensLabel.innerText = '10のくらい';
-            tensLabel.className = 'label';
+            tensLabel.innerText = '0';
+            tensLabel.className = 'tensLabel';
+            tensLabel.id = 'tensLabel';
             tensWrap.appendChild(tensLabel);
 
             const onesWrap = document.createElement('div');
             onesWrap.appendChild(onesCol);
             const onesLabel = document.createElement('div');
-            onesLabel.innerText = '1のくらい';
-            onesLabel.className = 'label';
+            onesLabel.innerText = '0';
+            onesLabel.className = 'oneslabel';
+            onesLabel.id = 'oneslabel';
             onesWrap.appendChild(onesLabel);
 
             abacus.appendChild(tensWrap);
@@ -246,8 +264,14 @@
 
             prevTens = tenCount;
 
-            let total = tenCount * 10 + oneCount;
-            // document.getElementById('answer').innerText = `こたえ: ${total}`;
+            let label = document.getElementById('tensLabel');
+            if (label) {
+                label.innerText = tenCount;
+            }
+            label = document.getElementById('onesLabel');
+            if (label) {
+                label.innerText = oneCount;
+            }
         }
 
         function checkAnswer() {
