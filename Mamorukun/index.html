@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>まもる君</title>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script> -->
+<script src="./crypto-js.min.js"></script>
+<style>
+	body { font-family: sans-serif; }
+    table {
+        table-layout: fixed;
+        border-collapse: collapse;
+        margin-top: 10px;
+        width: 100%;
+    }
+	th { border: 1px solid #ccc; padding: 5px; text-align: left; }
+    tr {
+        height: 60px;
+    }
+    td { 
+        border: 1px solid #ccc; 
+        padding: 5px; 
+        text-align: left;
+        position: relative;
+    }
+	#basicSection, #saveSection, #loadSection {
+		margin-top: 15px;
+		padding: 10px;
+		border: 1px solid #aaa;
+		border-radius: 5px;
+	}
+	#navButtons button {
+		margin-right: 10px;
+		margin-bottom: 10px;
+	}
+	tr.dragging {
+		opacity: 0.5;
+	}
+	label {
+		display: inline-block;
+		width: 400px;
+		text-align: left;
+		margin-right: 8px;
+		vertical-align: middle;
+	}
+	input, textarea {
+		width: 400px;
+	}
+	.form-row {
+		margin-bottom: 8px;
+	}
+	.form-row label {
+		display: inline-block;
+		width: 100px;
+		text-align: right;
+		margin-right: 10px;
+		vertical-align: top;
+	}
+	.form-row input, .form-row textarea {
+		width: 300px;
+	}
+	/* 列幅指定 */
+	table th:nth-child(1), table td:nth-child(1) {
+		width: 10%;
+	}
+	table th:nth-child(2), table td:nth-child(2) {
+		width: 25%;
+	}
+	table th:nth-child(3), table td:nth-child(3) {
+		width: 25%;
+	}
+	table th:nth-child(4), table td:nth-child(4) {
+		width: 35%;
+	}
+	table th:nth-child(5), table td:nth-child(5) {
+		width: 5%;
+		text-align: center;
+	}
+
+	/* 省略用テキスト */
+	.text-content {
+		display: block;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
+		padding-right: 70px; /* ボタン領域分の余白 */
+		box-sizing: border-box;
+	}
+
+	/* パスワード列のtdにrelativeを指定 */
+	td.password-cell {
+		position: relative;
+	}
+
+	/* ボタンまとめ縦並び右寄せ */
+	.td-pass-buttons {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 4px;
+		position: absolute;
+		top: 50%;
+		right: 5px;
+		transform: translateY(-50%);
+	}
+
+	/* ボタンの見た目調整 */
+	button.copy-btn, button.toggle-btn, button.edit-btn {
+		font-size: 12px;
+		padding: 2px 6px;
+		cursor: pointer;
+		width: 60px;
+		box-sizing: border-box;
+	}
+
+    button.remarksBtnClose {
+        margin-bottom: 0px;
+        flex-shrink: 0;
+        align-self: flex-end;        
+    }
+
+	/* 備考表示モーダル */
+	#remarksModal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        border: 1px solid #aaa;
+        padding: 20px;
+        z-index: 1000;
+        width: 600px;      /* 横幅を固定 */
+        height: 400px;     /* 高さを固定 */
+        overflow-y: auto;  /* 縦スクロールは必要に応じて */
+        overflow-x: hidden; /* 横スクロールは無し */
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        flex-direction: column;        
+	}
+	#remarksModal h3 {
+		margin-top: 0;
+	}
+	#remarksContent {
+		white-space: pre-wrap;
+		margin-bottom: 10px;
+        flex: 1 1 auto;
+        overflow-y: auto;        
+	}
+	#modalBackdrop {
+		display:none; 
+		position:fixed; 
+		top:0; 
+		left:0; 
+		width:100%; 
+		height:100%; 
+		background:rgba(0,0,0,0.4); 
+		z-index:999;
+	}
+	
+	/* 読込画面 */
+	#loadSection .masterpassLabel {
+		width: auto;
+		text-align: left;
+	}
+	#loadSection .masterpassInput {
+		width: 200px;
+	}
+</style>
+</head>
+<body>
+<h2>まもる君 ver 1.2.5</h2>
+
+<!-- ナビゲーション -->
+<div id="navButtons">
+	<button onclick="showSection('basic')">基本画面</button>
+	<button onclick="showSection('save')">保存画面</button>
+	<button onclick="showSection('load')">読み込み画面</button>
+</div>
+
+<!-- 基本画面 -->
+<div id="basicSection">
+	<h3>基本画面</h3>
+	<!-- 入力フォーム -->
+	<div class="form-row">
+		<label for="service">サービス名:</label>
+		<input type="text" id="service" list="serviceList" autocomplete="off" />
+		<datalist id="serviceList"></datalist>
+	</div>
+	<div class="form-row">
+		<label for="userid">ID:</label>
+		<input type="text" id="userid" />
+	</div>
+	<div class="form-row">
+		<label for="userpass">パスワード:</label>
+		<input type="text" id="userpass" />
+	</div>
+    <div class="form-row">
+	    <label for="remarks">備考:</label>
+	    <textarea id="remarks" rows="3"></textarea>
+    </div> 
+	<button id="addUpdateBtn" onclick="addOrUpdateEntry()">追加</button>
+	<button id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">キャンセル</button>
+	<hr>
+	<!-- フィルター -->
+	<label>サービス名フィルター: 
+		<input type="text" id="filterService" list="serviceList" autocomplete="off" oninput="updateTable()"/>
+		<datalist id="serviceList"></datalist>
+    </label>
+	<!-- 表示テーブル -->
+	<table id="dataTable">
+		<thead>
+			<tr>
+				<th>サービス</th>
+				<th>ID</th>
+				<th>パスワード</th>
+				<th>備考</th>
+				<th>操作</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+	<p>※ 行をドラッグ＆ドロップで並び替え可能</p>
+</div>
+
+<!-- 備考表示用モーダル -->
+<div id="remarksModal">
+    <h3>備考</h3>
+    <pre id="remarksContent"></pre>
+    <button class="remarksBtnClose" onclick="closeRemarksModal()">閉じる</button>
+</div>
+
+<!-- モーダルの背景 -->
+<div id="modalBackdrop" onclick="closeRemarksModal()"></div>
+
+<!-- 保存画面 -->
+<div id="saveSection" style="display:none;">
+	<h3>保存画面</h3>
+
+	<label>暗号化データ出力</label><br>
+	<button onclick="encryptAndSave()">ファイル保存</button><br>
+	<button onclick="encryptAndOutputText()">テキスト生成</button><br>
+	
+	<!-- 鍵保持用 -->
+	<input type="text" id="masterpass" style="display: none;"></label>
+</div>
+
+<!-- 読み込み画面 -->
+<div id="loadSection" style="display:none;">
+	<h3>読み込み画面</h3>	
+
+	<label class="masterpassLabel">二人で初めて見た花火大会の場所（ひらがな）:</label>
+	<input class="masterpassInput" type="text" id="masterpassLoad1"><br>
+	<label class="masterpassLabel">Jの誕生日:</label><input class="masterpassInput" type="password" id="masterpassLoad2"><br>
+	<label class="masterpassLabel">Kの誕生日:</label><input class="masterpassInput" type="password" id="masterpassLoad3"><br>
+	<label class="masterpassLabel">Nの誕生日:</label><input class="masterpassInput" type="password" id="masterpassLoad4"><br>
+
+	<br>
+	
+	<label>テキストから復元</label><br>
+	<textarea id="encryptedText" rows="5" placeholder="暗号データを貼り付け"></textarea><br>
+	<button onclick="loadFromText()">復元</button>	
+
+	<br><br>
+
+	<label>ファイルから復元</label><br>
+	<label><input type="file" id="fileInput"></label><br>
+	<button onclick="loadAndDecrypt()">復元</button>
+</div>
+
+<script>
+let entries = [];
+let editIndex = -1; // 編集中のindex
+
+function addOrUpdateEntry() {
+	const service = document.getElementById("service").value.trim();
+	const id = document.getElementById("userid").value.trim();
+	const pass = document.getElementById("userpass").value.trim();
+	const remarks = document.getElementById("remarks").value.trim();
+
+	if (!service || !id || !pass) {
+		alert("すべて入力してください。");
+		return;
+	}
+
+	if(editIndex === -1) {
+		// 新規追加
+		entries.push({ service, id, pass, remarks });
+	} else {
+		// 編集更新
+		entries[editIndex] = { service, id, pass, remarks };
+		editIndex = -1;
+		document.getElementById("addUpdateBtn").textContent = "追加";
+		document.getElementById("cancelEditBtn").style.display = "none";
+	}
+
+	updateTable();
+	updateServiceList();
+
+	// フォームをクリア
+	document.getElementById("service").value = "";
+	document.getElementById("userid").value = "";
+	document.getElementById("userpass").value = "";
+	document.getElementById("remarks").value = "";
+}
+
+function startEdit(idx) {
+	editIndex = idx;
+	const entry = entries[idx];
+
+	document.getElementById("service").value = entry.service;
+	document.getElementById("userid").value = entry.id;
+	document.getElementById("userpass").value = entry.pass;
+	document.getElementById("remarks").value = entry.remarks || "";
+
+	document.getElementById("addUpdateBtn").textContent = "更新";
+	document.getElementById("cancelEditBtn").style.display = "inline-block";
+}
+
+function cancelEdit() {
+	editIndex = -1;
+	document.getElementById("addUpdateBtn").textContent = "追加";
+	document.getElementById("cancelEditBtn").style.display = "none";
+
+	document.getElementById("service").value = "";
+	document.getElementById("userid").value = "";
+	document.getElementById("userpass").value = "";
+	document.getElementById("remarks").value = "";
+}
+
+function updateTable() {
+	const filterText = document.getElementById("filterService").value.trim().toLowerCase();
+	const tbody = document.querySelector("#dataTable tbody");
+	tbody.innerHTML = "";
+
+	entries.forEach((entry, idx) => {
+		if (!entry.service.toLowerCase().includes(filterText)) return;
+
+		const tr = document.createElement("tr");
+		tr.setAttribute("draggable", true);
+		tr.dataset.index = idx;
+
+		// ドラッグイベント設定
+		tr.addEventListener("dragstart", dragStart);
+		tr.addEventListener("dragover", dragOver);
+		tr.addEventListener("drop", drop);
+		tr.addEventListener("dragend", dragEnd);
+
+		// サービス
+		const tdService = document.createElement("td");
+		tdService.textContent = entry.service;
+		tr.appendChild(tdService);
+
+		// ID（コピー可能）
+		const tdId = document.createElement("td");
+        tdId.style.position = "relative";
+
+        const spanId = document.createElement("span");
+        spanId.className = "text-content";
+        spanId.textContent = entry.id;
+        tdId.appendChild(spanId);
+
+        const btnIdContainer = document.createElement("div");
+        btnIdContainer.className = "td-pass-buttons";
+
+        const copyIdBtn = document.createElement("button");
+        copyIdBtn.textContent = "コピー";
+        copyIdBtn.className = "copy-btn";
+        copyIdBtn.onclick = () => copyToClipboard(entry.id);
+        btnIdContainer.appendChild(copyIdBtn);
+
+        tdId.appendChild(btnIdContainer);
+		tr.appendChild(tdId);
+
+        // パスワード（マスク表示 + コピー可能 + 表示切替ボタン）
+        const tdPass = document.createElement("td");
+        tdPass.className = "password-cell";
+
+        const passSpan = document.createElement("span");
+        passSpan.className = "text-content";
+        passSpan.textContent = "●●●●●";
+        passSpan.dataset.masked = "true";
+        passSpan.dataset.password = entry.pass;
+        tdPass.appendChild(passSpan);
+
+        const btnPassContainer = document.createElement("div");
+        btnPassContainer.className = "td-pass-buttons";
+
+        const copyPassBtn = document.createElement("button");
+        copyPassBtn.textContent = "コピー";
+        copyPassBtn.className = "copy-btn";
+        copyPassBtn.onclick = () => copyToClipboard(entry.pass);
+        btnPassContainer.appendChild(copyPassBtn);
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.textContent = "表示";
+        toggleBtn.className = "toggle-btn";
+        toggleBtn.onclick = () => {
+            if(passSpan.dataset.masked === "true") {
+                passSpan.textContent = entry.pass;
+                passSpan.dataset.masked = "false";
+                toggleBtn.textContent = "非表示";
+            } else {
+                passSpan.textContent = "●●●●●";
+                passSpan.dataset.masked = "true";
+                toggleBtn.textContent = "表示";
+            }
+        };
+        btnPassContainer.appendChild(toggleBtn);
+
+        tdPass.appendChild(btnPassContainer);
+        tr.appendChild(tdPass);
+
+		// 備考
+		const tdRemarks = document.createElement("td");
+        const btnRemarksContainer = document.createElement("div");
+		const showRemarksBtn = document.createElement("button");
+        tdRemarks.textContent = entry.remarks || "";
+        btnRemarksContainer.className = "td-pass-buttons";
+		showRemarksBtn.textContent = "表示";
+        showRemarksBtn.className = "edit-btn";
+		showRemarksBtn.onclick = () => showRemarks(entry.remarks);
+        btnRemarksContainer.appendChild(showRemarksBtn);
+        tdRemarks.appendChild(btnRemarksContainer);
+		tr.appendChild(tdRemarks);
+
+		// 操作（編集ボタン）
+		const tdAction = document.createElement("td");
+		const editBtn = document.createElement("button");
+		editBtn.textContent = "編集";
+		editBtn.className = "edit-btn";
+		editBtn.onclick = () => startEdit(idx);
+		tdAction.appendChild(editBtn);
+		tr.appendChild(tdAction);
+
+		tbody.appendChild(tr);
+	});
+}
+
+// ドラッグ＆ドロップ関連
+let dragSrcEl = null;
+
+function dragStart(e) {
+	dragSrcEl = this;
+	this.classList.add('dragging');
+	e.dataTransfer.effectAllowed = 'move';
+	e.dataTransfer.setData('text/html', this.outerHTML);
+}
+
+function dragOver(e) {
+	e.preventDefault();
+	e.dataTransfer.dropEffect = 'move';
+	return false;
+}
+
+function drop(e) {
+	e.stopPropagation();
+
+	if (dragSrcEl !== this) {
+		const tbody = this.parentNode;
+		const dragIndex = parseInt(dragSrcEl.dataset.index);
+		const dropIndex = parseInt(this.dataset.index);
+
+		const movedItem = entries.splice(dragIndex, 1)[0];
+		entries.splice(dropIndex, 0, movedItem);
+
+		updateTable();
+	}
+	return false;
+}
+
+function dragEnd() {
+	this.classList.remove('dragging');
+}
+
+function copyToClipboard(text) {
+	navigator.clipboard.writeText(text)
+		.then(() => alert("コピーしました"))
+		.catch(() => alert("コピーに失敗しました"));
+}
+
+function encryptAndSave() {
+	if (entries.length === 0) {
+		alert("保存するデータがありません。");
+		return;
+	}
+	const masterpass = document.getElementById("masterpass").value;
+	if (!masterpass) {
+		alert("暗号化パスワードを入力してください。");
+		return;
+	}
+
+	const jsonData = JSON.stringify(entries);
+	const encrypted = CryptoJS.AES.encrypt(jsonData, masterpass).toString();
+
+	const blob = new Blob([encrypted], { type: "text/plain" });
+	const url = URL.createObjectURL(blob);
+
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = getNowYmdHms() + ".enc";
+	a.click();
+
+	URL.revokeObjectURL(url);
+	alert("保存しました。");
+}
+
+function encryptAndOutputText() {
+	if (entries.length === 0) {
+		alert("保存するデータがありません。");
+		return;
+	}
+	const masterpass = document.getElementById("masterpass").value;
+	if (!masterpass) {
+		alert("暗号化パスワードを入力してください。");
+		return;
+	}
+
+	const jsonData = JSON.stringify(entries);
+	const encrypted = CryptoJS.AES.encrypt(jsonData, masterpass).toString();
+
+	navigator.clipboard.writeText(encrypted)
+	alert("クリップボードにコピーしました。");	
+}
+
+function loadAndDecrypt() {
+	const file = document.getElementById("fileInput").files[0];
+	let masterpass = "";
+	masterpass = masterpass + document.getElementById("masterpassLoad1").value;
+	masterpass = masterpass + document.getElementById("masterpassLoad2").value;
+	masterpass = masterpass + document.getElementById("masterpassLoad3").value;
+	masterpass = masterpass + document.getElementById("masterpassLoad4").value;
+
+	if (!file || !masterpass) {
+		alert("ファイルと暗号化パスワードを入力してください。");
+		return;
+	}
+
+	const reader = new FileReader();
+	reader.onload = function(e) {
+		const encrypted = e.target.result;
+		try {
+			const bytes = CryptoJS.AES.decrypt(encrypted, masterpass);
+			const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+
+			if (!decrypted) throw new Error();
+			entries = JSON.parse(decrypted);
+			updateTable();
+			updateServiceList();
+			document.getElementById("masterpass").value = masterpass;
+			alert("復号して読み込みました。");
+			showSection('basic');
+		} catch {
+			alert("パスワードが間違っているか、ファイルが壊れています。");
+		}
+	};
+	reader.readAsText(file);
+}
+
+function loadFromText() {
+    let masterpass = "";
+    masterpass += document.getElementById("masterpassLoad1").value;
+    masterpass += document.getElementById("masterpassLoad2").value;
+    masterpass += document.getElementById("masterpassLoad3").value;
+    masterpass += document.getElementById("masterpassLoad4").value;
+
+    const encrypted = document.getElementById("encryptedText").value.trim();
+
+    if (!encrypted || !masterpass) {
+        alert("テキストデータと暗号化パスワードを入力してください。");
+        return;
+    }
+
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, masterpass);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (!decrypted) throw new Error();
+
+        entries = JSON.parse(decrypted);
+        updateTable();
+        updateServiceList();
+
+        document.getElementById("masterpass").value = masterpass;
+
+        alert("復号して読み込みました。");
+        showSection('basic');
+    } catch {
+        alert("パスワードが間違っているか、テキストデータに誤りがあります。");
+    }
+}
+
+function showSection(name) {
+	document.getElementById("basicSection").style.display = (name === 'basic') ? 'block' : 'none';
+	document.getElementById("saveSection").style.display = (name === 'save') ? 'block' : 'none';
+	document.getElementById("loadSection").style.display = (name === 'load') ? 'block' : 'none';
+}
+
+function updateServiceList() {
+	const serviceSet = new Set();
+	entries.forEach(e => {
+		if (e.service) serviceSet.add(e.service);
+	});
+	const datalist = document.getElementById("serviceList");
+	datalist.innerHTML = "";
+	serviceSet.forEach(service => {
+		const option = document.createElement("option");
+		option.value = service;
+		datalist.appendChild(option);
+	});
+}
+
+function showRemarks(text) {
+	document.getElementById("remarksContent").textContent = text || "(なし)";    
+	document.getElementById("remarksModal").style.display = "block";
+	document.getElementById("modalBackdrop").style.display = "block";
+    const modal = document.getElementById("remarksModal");
+    modal.style.display = "flex";    
+}
+function closeRemarksModal() {
+	document.getElementById("remarksModal").style.display = "none";
+	document.getElementById("modalBackdrop").style.display = "none";
+}
+
+function getNowYmdHms() {
+  const now = new Date();
+
+  const yyyy = now.getFullYear();
+  const MM = String(now.getMonth() + 1).padStart(2, '0'); // 月は0始まりなので+1
+  const dd = String(now.getDate()).padStart(2, '0');
+  const HH = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+
+  return `${yyyy}${MM}${dd}${HH}${mm}${ss}`;
+}
+
+// 初期表示は読込画面
+showSection('load');
+</script>
+</body>
+</html>
