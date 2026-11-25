@@ -266,6 +266,43 @@
     html.dark .dark\:border-slate-700\/60 { border-color: rgba(51, 65, 85, 0.6); }
     .border-rose-500 { border-color: #f43f5e; }
 
+    /* ジャンル絞り込みボタン */
+    .genre-filter-btn {
+      padding: 0.3rem 0.65rem;
+      border-radius: 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid #e2e8f0;
+      background-color: #f8fafc;
+      color: #475569;
+      transition: all 0.15s ease;
+    }
+    html.dark .genre-filter-btn {
+      border-color: #334155;
+      background-color: rgba(30, 41, 59, 0.75);
+      color: #cbd5e1;
+    }
+    .genre-filter-btn:hover {
+      border-color: #6366f1;
+      color: #4f46e5;
+    }
+    html.dark .genre-filter-btn:hover {
+      border-color: #818cf8;
+      color: #a5b4fc;
+      background-color: rgba(30, 41, 59, 1);
+    }
+    .genre-filter-btn.is-active {
+      background-color: #4f46e5;
+      border-color: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+    }
+    .genre-filter-btn.is-active:hover {
+      background-color: #4338ca;
+      border-color: #4338ca;
+      color: #ffffff;
+    }
+
     /* メーカーバッジ */
     .maker-pill-intel {
       background-color: rgba(14, 165, 233, 0.12);
@@ -745,13 +782,23 @@
 
       <!-- ゲーム必要スペック一覧表 -->
       <div id="view-games" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-        <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 class="text-base font-bold">ゲーム別 必要スペック目安一覧</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">行または「条件に反映」をクリックすると、左側の検索・絞り込み条件にスペック目安が反映されます</p>
+        <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 class="text-base font-bold">ゲーム別 必要スペック目安一覧</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">行または「条件に反映」をクリックすると、左側の検索・絞り込み条件にスペック目安が反映されます</p>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 shrink-0">
+              選択中: <span id="selected-game-label" class="font-semibold text-indigo-600 dark:text-indigo-400">未選択</span>
+            </div>
           </div>
-          <div class="text-xs text-slate-500 dark:text-slate-400">
-            選択中: <span id="selected-game-label" class="font-semibold text-indigo-600 dark:text-indigo-400">未選択</span>
+
+          <!-- ジャンル絞り込みボタン群（赤枠エリア） -->
+          <div class="flex flex-wrap items-center gap-1.5 pt-1">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1">ジャンル:</span>
+            <div id="game-genre-buttons" class="flex flex-wrap items-center gap-1.5">
+              <!-- JSで動的生成 -->
+            </div>
           </div>
         </div>
 
@@ -804,133 +851,684 @@
   <script>
     const GAME_SPEC_PRESETS = [
       {
-        id: 'poe2',
-        game: 'Path of Exile 2 (POE2)',
-        genre: 'アクションRPG',
-        resolution: 'FHD〜WQHD (60〜120fps目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 22,000+ 目安',
-        gpuReq: 'VRAM 8〜12GB · Time Spy 13,000+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 22000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13000 }
+        id: 'throne-and-liberty',
+        game: 'Throne and Liberty',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 12コア / 24スレッド · PassMark 21,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 12, minThreads: 24, minCpuBench: 21000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 11000 }
       },
       {
         id: 'once-human',
-        game: 'Once Human（ワンスヒューマン）',
-        genre: 'オープンワールドサバイバル',
-        resolution: 'FHD〜WQHD (60fps+目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 20,000+ 目安',
-        gpuReq: 'VRAM 8〜12GB · Time Spy 12,000+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 20000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12000 }
+        game: 'Once Human',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 8スレッド · PassMark 9,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 8, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
       },
       {
-        id: 'minecraft',
-        game: 'Minecraft（統合版 / シェーダー・大規模建築）',
+        id: 'palia',
+        game: 'Palia',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 8,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 8500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 8500 }
+      },
+      {
+        id: 'tarisland',
+        game: 'Tarisland',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 9,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 9000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'pax-dei',
+        game: 'Pax Dei',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 17,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 12,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 17500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12500 }
+      },
+      {
+        id: 'corepunk',
+        game: 'Corepunk',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 13,000+ 目安 (最低 4コア/8スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 13000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'bitcraft-online',
+        game: 'BitCraft Online',
         genre: 'サンドボックス',
-        resolution: 'FHD〜WQHD (高fps/シェーダー目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 21,000+ 目安',
-        gpuReq: 'VRAM 8〜12GB · Time Spy 11,000+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 21000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11000 }
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 9,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 10,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 10500 }
       },
       {
-        id: 'mhw',
-        game: 'モンスターハンター：ワールド',
-        genre: 'ハンティングアクション',
-        resolution: 'FHD〜WQHD (60fps+目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 18,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 11,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11500 }
+        id: 'brighter-shores',
+        game: 'Brighter Shores',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 2コア / 4スレッド · PassMark 5,000+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 2GB+ · Time Spy 2,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 2, minThreads: 4, minCpuBench: 5000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 2, minGpuBench: 2500 }
       },
       {
-        id: 'gta5',
-        game: 'Grand Theft Auto V (GTA5)',
-        genre: 'オープンワールドアクション',
-        resolution: 'FHD〜WQHD (高設定目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 15,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 9,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 15000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 9500 }
+        id: 'ff14',
+        game: 'Final Fantasy XIV',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 15,000+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 15000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 11000 }
+      },
+      {
+        id: 'wow',
+        game: 'World of Warcraft',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 14,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 12,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 14000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12500 }
       },
       {
         id: 'black-desert',
-        game: '黒い砂漠 (Black Desert)',
-        genre: 'MMORPG',
-        resolution: 'FHD〜WQHD (Remastered目安)',
-        cpuReq: '8コア / 16スレッド · PassMark 26,000+ 目安',
-        gpuReq: 'VRAM 12GB · Time Spy 17,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 26000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 12, minGpuBench: 17500 }
-      },
-      {
-        id: 'shadowverse-wb',
-        game: 'Shadowverse: Worlds Beyond',
-        genre: 'デジタルTCG',
-        resolution: 'FHD〜4K (60〜120fps目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 14,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 8,000+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 14000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 8000 }
-      },
-      {
-        id: 'cheat-yusha',
-        game: 'チート勇者',
-        genre: 'RPG・放置/育成アクション',
-        resolution: 'FHD〜WQHD (快適動作目安)',
-        cpuReq: '6コア / 10スレッド · PassMark 13,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 7,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 10, minCpuBench: 13000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 7500 }
-      },
-      {
-        id: 'hp-magic-awakened',
-        game: 'ハリー・ポッター：魔法の覚醒',
-        genre: 'リアルタイムカードバトル / RPG',
-        resolution: 'FHD〜WQHD (60fps目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 15,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 8,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 15000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 8500 }
-      },
-      {
-        id: 'mabinogi-mobile',
-        game: 'マビノギモバイル',
-        genre: 'MMORPG',
-        resolution: 'FHD〜WQHD (60fps目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 18,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 10,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 10500 }
-      },
-      {
-        id: 'dungeon-slasher',
-        game: 'ダンジョンスラッシャー',
-        genre: 'ハクスラ / アクションRPG',
-        resolution: 'FHD〜WQHD (60〜120fps目安)',
-        cpuReq: '6コア / 12スレッド · PassMark 17,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 10,000+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 17000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 10000 }
-      },
-      {
-        id: 'mario-party',
-        game: 'マリオパーティ',
-        genre: 'パーティ / ミニゲーム',
+        game: 'Black Desert Online',
+        genre: 'MMO RPG',
         resolution: 'FHD (60fps目安)',
-        cpuReq: '6コア / 10スレッド · PassMark 13,000+ 目安',
-        gpuReq: 'VRAM 8GB · Time Spy 7,500+ 目安',
-        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 10, minCpuBench: 13000 },
-        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 7500 }
-      }
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 12,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 10,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 12500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 10500 }
+      },
+      {
+        id: 'lost-ark',
+        game: 'Lost Ark',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 6スレッド · PassMark 9,000+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 5,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 6, minCpuBench: 9000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 5000 }
+      },
+      {
+        id: 'gw2',
+        game: 'Guild Wars 2',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 8,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 8500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 7500 }
+      },
+      {
+        id: 'eso',
+        game: 'The Elder Scrolls Online',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 7,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 7000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 8500 }
+      },
+      {
+        id: 'runescape',
+        game: 'RuneScape',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 2コア / 4スレッド · PassMark 4,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 2GB+ · Time Spy 3,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 2, minThreads: 4, minCpuBench: 4500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 2, minGpuBench: 3000 }
+      },
+      {
+        id: 'osrs',
+        game: 'Old School RuneScape',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 2コア / 4スレッド · PassMark 4,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 2GB+ · Time Spy 3,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 2, minThreads: 4, minCpuBench: 4500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 2, minGpuBench: 3000 }
+      },
+      {
+        id: 'albion-online',
+        game: 'Albion Online',
+        genre: 'サンドボックス',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 2コア / 4スレッド · PassMark 4,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 2GB+ · Time Spy 3,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 2, minThreads: 4, minCpuBench: 4500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 2, minGpuBench: 3000 }
+      },
+      {
+        id: 'new-world',
+        game: 'New World: Aeternum',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 18,000+ 目安 (最低 6コア/12スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 11000 }
+      },
+      {
+        id: 'dune-awakening',
+        game: 'Dune: Awakening',
+        genre: 'MMO RPG',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 18,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 16,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 16500 }
+      },
+      {
+        id: 'soulframe',
+        game: 'Soulframe',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 9,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 6,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 9000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 6500 }
+      },
+      {
+        id: 'cs2',
+        game: 'Counter-Strike 2',
+        genre: 'FPS',
+        resolution: 'FHD (120fps+目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 9,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 7500 }
+      },
+      {
+        id: 'the-finals',
+        game: 'THE FINALS',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 16,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 13,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 16500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13500 }
+      },
+      {
+        id: 'cod-mw3',
+        game: 'Call of Duty: Modern Warfare III',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 14,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 14,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 14500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 14500 }
+      },
+      {
+        id: 'cod-bo6',
+        game: 'Call of Duty: Black Ops 6',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 14,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 14,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 14500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 14500 }
+      },
+      {
+        id: 'cod-bo7',
+        game: 'Call of Duty: Black Ops 7',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 14,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 14,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 14500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 14500 }
+      },
+      {
+        id: 'battlefield-6',
+        game: 'Battlefield 6',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 20,000+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 16,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 20000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 16500 }
+      },
+      {
+        id: 'delta-force',
+        game: 'Delta Force',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 6スレッド · PassMark 9,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 10,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 6, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 10500 }
+      },
+      {
+        id: 'arena-breakout-infinite',
+        game: 'Arena Breakout: Infinite',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 16,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 16500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11000 }
+      },
+      {
+        id: 'gray-zone-warfare',
+        game: 'Gray Zone Warfare',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 8スレッド · PassMark 16,500+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 19,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 8, minCpuBench: 16500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 19500 }
+      },
+      {
+        id: 'bodycam',
+        game: 'Bodycam',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 18,000+ 目安 (最低 8コア/8スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 12,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12500 }
+      },
+      {
+        id: 'ready-or-not',
+        game: 'Ready or Not',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 6スレッド · PassMark 9,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 6, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'doom-the-dark-ages',
+        game: 'DOOM: The Dark Ages',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 28,000+ 目安 (最低 8コア/16スレッド)',
+        gpuReq: '推奨 VRAM 10GB+ · Time Spy 22,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 28000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 10, minGpuBench: 22000 }
+      },
+      {
+        id: 'stalker-2',
+        game: 'S.T.A.L.K.E.R. 2: Heart of Chornobyl',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 22,000+ 目安 (最低 4コア/8スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 18,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 22000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 18500 }
+      },
+      {
+        id: 'fragpunk',
+        game: 'FragPunk',
+        genre: 'FPS',
+        resolution: 'FHD (120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 19,000+ 目安 (最低 4コア/8スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 12,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 19000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12500 }
+      },
+      {
+        id: 'robocop-rogue-city',
+        game: 'RoboCop: Rogue City',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 18,000+ 目安 (最低 4コア/8スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 18,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 18500 }
+      },
+      {
+        id: 'trepang2',
+        game: 'Trepang2',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 8,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 8500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'warhammer-40k-boltgun',
+        game: 'Warhammer 40,000: Boltgun',
+        genre: 'FPS',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 6スレッド · PassMark 9,500+ 目安 (最低 2コア/2スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 6, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 7500 }
+      },
+      {
+        id: 'payday-3',
+        game: 'Payday 3',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 8スレッド · PassMark 15,000+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 11,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 8, minCpuBench: 15000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11500 }
+      },
+      {
+        id: 'hunt-showdown-1896',
+        game: 'Hunt: Showdown 1896',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 13,000+ 目安 (最低 4コア/8スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 13,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 13000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13500 }
+      },
+      {
+        id: 'arc-raiders',
+        game: 'ARC Raiders',
+        genre: 'FPS',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 16,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 13,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 16500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13500 }
+      },
+      {
+        id: 'diablo-4',
+        game: 'Diablo IV',
+        genre: 'ハクスラ',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 6,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 6500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 7500 }
+      },
+      {
+        id: 'poe2',
+        game: 'Path of Exile 2',
+        genre: 'ハクスラ',
+        resolution: 'FHD〜WQHD (60〜120fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 17,500+ 目安 (最低 4コア/8スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 17500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11000 }
+      },
+      {
+        id: 'last-epoch',
+        game: 'Last Epoch',
+        genre: 'ハクスラ',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 7,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 7500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'hades-2',
+        game: 'Hades II',
+        genre: 'ローグライク',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 6,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 6500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 11000 }
+      },
+      {
+        id: 'black-myth-wukong',
+        game: 'Black Myth: Wukong',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 8スレッド · PassMark 15,000+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 8, minCpuBench: 15000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11000 }
+      },
+      {
+        id: 'granblue-fantasy-relink',
+        game: 'Granblue Fantasy: Relink',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 13,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 15,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 13500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 15500 }
+      },
+      {
+        id: 'lords-of-the-fallen',
+        game: 'Lords of the Fallen',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 13,500+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 15,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 13500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 15500 }
+      },
+      {
+        id: 'lies-of-p',
+        game: 'Lies of P',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 7,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 9,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 7500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 9500 }
+      },
+      {
+        id: 'warhammer-40k-space-marine-2',
+        game: 'Warhammer 40,000: Space Marine 2',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 12コア / 20スレッド · PassMark 28,000+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 19,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 12, minThreads: 20, minCpuBench: 28000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 19500 }
+      },
+      {
+        id: 'stellar-blade',
+        game: 'Stellar Blade',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 6スレッド · PassMark 9,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 12,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 6, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12500 }
+      },
+      {
+        id: 'monster-hunter-wilds',
+        game: 'Monster Hunter Wilds',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 18,000+ 目安 (最低 6コア/12スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 15,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 15500 }
+      },
+      {
+        id: 'elden-ring-nightreign',
+        game: 'Elden Ring Nightreign',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 16,500+ 目安 (最低 6コア/12スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 13,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 16500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13500 }
+      },
+      {
+        id: 'halls-of-torment',
+        game: 'Halls of Torment',
+        genre: 'ハクスラ',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 6,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 6000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'v-rising',
+        game: 'V Rising',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 18,000+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 13,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13500 }
+      },
+      {
+        id: 'blazblue-entropy-effect',
+        game: 'BlazBlue Entropy Effect',
+        genre: 'ローグライク',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 4スレッド · PassMark 7,500+ 目安 (最低 2コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 4, minCpuBench: 7500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'ravenswatch',
+        game: 'Ravenswatch',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 4コア / 8スレッド · PassMark 11,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 4GB+ · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 4, minThreads: 8, minCpuBench: 11500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 4, minGpuBench: 7500 }
+      },
+      {
+        id: 'no-rest-for-the-wicked',
+        game: 'No Rest for the Wicked',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 8コア / 16スレッド · PassMark 26,000+ 目安 (最低 6コア/6スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 19,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 26000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 19500 }
+      },
+      {
+        id: 'enshrouded',
+        game: 'Enshrouded',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 13,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 15,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 13500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 15500 }
+      },
+      {
+        id: 'darksiders-genesis',
+        game: 'Darksiders Genesis',
+        genre: 'アクション',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 9,500+ 目安 (最低 4コア/4スレッド)',
+        gpuReq: '推奨 VRAM 6GB+ · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 9500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 6, minGpuBench: 8500 }
+      },
+      {
+        id: 'vampire-survivors',
+        game: 'Vampire Survivors',
+        genre: 'アクション',
+        resolution: 'FHD (60〜120fps目安)',
+        cpuReq: '推奨 2コア / 4スレッド · PassMark 3,500+ 目安 (最低 2コア/2スレッド)',
+        gpuReq: '推奨 VRAM 2GB+ · Time Spy 2,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 2, minThreads: 4, minCpuBench: 3500 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 2, minGpuBench: 2500 }
+      },
+      {
+        id: 'valorant',
+        game: 'VALORANT（ヴァロラント）',
+        genre: 'FPS',
+        resolution: 'FHD (144〜240fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 19,000+ 目安',
+        gpuReq: '推奨 VRAM 8GB · Time Spy 8,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2020, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 19000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2020, yearMax: 2026, minVram: 8, minGpuBench: 8000 }
+      },
+      {
+        id: 'apex-legends',
+        game: 'Apex Legends（エーペックスレジェンズ）',
+        genre: 'FPS',
+        resolution: 'FHD〜WQHD (144〜240fps目安)',
+        cpuReq: '推奨 6コア / 12スレッド · PassMark 21,000+ 目安',
+        gpuReq: '推奨 VRAM 8GB+ · Time Spy 11,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2020, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 21000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2020, yearMax: 2026, minVram: 8, minGpuBench: 11500 }
+      },
     ];
 
     let selectedGameId = null;
+    let selectedGameGenre = 'ALL';
+
+    function getUniqueGameGenres() {
+      const seen = new Set();
+      const list = [];
+      GAME_SPEC_PRESETS.forEach(item => {
+        if (item.genre && !seen.has(item.genre)) {
+          seen.add(item.genre);
+          list.push(item.genre);
+        }
+      });
+      return list;
+    }
+
+    function renderGameGenreButtons() {
+      const container = document.getElementById('game-genre-buttons');
+      if (!container) return;
+      const genres = getUniqueGameGenres();
+      const allBtn = `
+        <button type="button" onclick="selectGameGenre('ALL')"
+          class="genre-filter-btn ${selectedGameGenre === 'ALL' ? 'is-active' : ''}">
+          すべて (${GAME_SPEC_PRESETS.length})
+        </button>
+      `;
+      const genreBtns = genres.map(genre => {
+        const count = GAME_SPEC_PRESETS.filter(g => g.genre === genre).length;
+        const active = selectedGameGenre === genre;
+        return `
+          <button type="button" onclick="selectGameGenre('${genre.replace(/'/g, "\\'")}')"
+            class="genre-filter-btn ${active ? 'is-active' : ''}">
+            ${genre} (${count})
+          </button>
+        `;
+      }).join('');
+      container.innerHTML = allBtn + genreBtns;
+    }
+
+    function selectGameGenre(genre) {
+      selectedGameGenre = genre;
+      renderGameGenreButtons();
+      renderGameSpecTable();
+    }
 
     function renderGameSpecTable() {
       const tbody = document.getElementById('game-spec-tbody');
       if (!tbody) return;
-      tbody.innerHTML = GAME_SPEC_PRESETS.map(item => {
+      const list = selectedGameGenre === 'ALL'
+        ? GAME_SPEC_PRESETS
+        : GAME_SPEC_PRESETS.filter(item => item.genre === selectedGameGenre);
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-sm text-slate-400">該当するジャンルのゲームがありません。</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => {
         const isSelected = selectedGameId === item.id;
         return `
           <tr onclick="applyGameSpecToFilter('${item.id}')"
@@ -1008,6 +1606,7 @@
       }
 
       renderMakerCheckboxes();
+      renderGameGenreButtons();
       renderGameSpecTable();
       applyFilters();
       switchMainTab('specs');
@@ -1251,6 +1850,7 @@
         }
       }
       renderMakerCheckboxes();
+      renderGameGenreButtons();
       renderGameSpecTable();
       applyFilters();
     }
@@ -1295,10 +1895,12 @@
       document.getElementById('filter-min-vram').value = '8';
       document.getElementById('filter-min-gpu-bench').value = '7500';
       selectedGameId = null;
+      selectedGameGenre = 'ALL';
       const gameLabel = document.getElementById('selected-game-label');
       if (gameLabel) gameLabel.textContent = '未選択';
       selectedMakers = new Set(['Intel', 'AMD', 'NVIDIA']);
       renderMakerCheckboxes();
+      renderGameGenreButtons();
       renderGameSpecTable();
       applyFilters();
       showToast('検索条件をリセットしました');
@@ -1466,6 +2068,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       renderMakerCheckboxes();
+      renderGameGenreButtons();
       renderGameSpecTable();
       applyFilters();
     });
