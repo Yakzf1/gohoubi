@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CPU・GPU スペック比較ダッシュボード (2020-2026)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+    }
+    html.dark {
+      color-scheme: dark;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    html.dark body {
+      background-color: #020617;
+      color: #f1f5f9;
+    }
+    ::selection {
+      background-color: #6366f1;
+      color: #ffffff;
+    }
+    button, input, select {
+      font-family: inherit;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+
+    /* カスタムスクロールバー */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.55);
+    }
+
+    /* ユーティリティ＆レイアウト */
+    .hidden { display: none !important; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    .flex { display: flex; }
+    .flex-1 { flex: 1 1 0%; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .shrink-0 { flex-shrink: 0; }
+    .min-w-0 { min-width: 0; }
+    .w-full { width: 100%; }
+    .w-10 { width: 2.5rem; }
+    .h-10 { height: 2.5rem; }
+    .w-6 { width: 1.5rem; }
+    .h-6 { height: 1.5rem; }
+    .w-4 { width: 1rem; }
+    .h-4 { height: 1rem; }
+    .w-3\.5 { width: 0.875rem; }
+    .h-3\.5 { height: 0.875rem; }
+    .w-2 { width: 0.5rem; }
+    .h-2 { height: 0.5rem; }
+    .w-1\.5 { width: 0.375rem; }
+    .h-1\.5 { height: 0.375rem; }
+    .w-12 { width: 3rem; }
+    .w-16 { width: 4rem; }
+    .w-28 { width: 7rem; }
+    .h-2\.5 { height: 0.625rem; }
+    .min-w-\[200px\] { min-width: 200px; }
+    .min-w-\[680px\] { min-width: 680px; }
+    .min-w-\[760px\] { min-width: 760px; }
+    .max-h-\[72vh\] { max-height: 72vh; }
+
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .gap-1 { gap: 0.25rem; }
+    .gap-1\.5 { gap: 0.375rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-5 { gap: 1.25rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+
+    .p-1 { padding: 0.25rem; }
+    .p-2 { padding: 0.5rem; }
+    .p-3 { padding: 0.75rem; }
+    .p-4 { padding: 1rem; }
+    .p-8 { padding: 2rem; }
+    .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .px-2\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+    .pl-9 { padding-left: 2.25rem; }
+    .pr-3 { padding-right: 0.75rem; }
+    .pt-3 { padding-top: 0.75rem; }
+    .pt-4 { padding-top: 1rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-1\.5 { margin-bottom: 0.375rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mt-0\.5 { margin-top: 0.125rem; }
+    .mt-5 { margin-top: 1.25rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+
+    .max-w-\[1600px\] { max-width: 1600px; }
+
+    .text-left { text-align: left; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+
+    .text-\[10px\] { font-size: 10px; line-height: 1.3; }
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-base { font-size: 1rem; line-height: 1.5rem; }
+    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .font-mono { font-variant-numeric: tabular-nums; }
+    .tracking-tight { letter-spacing: -0.025em; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .uppercase { text-transform: uppercase; }
+    .leading-tight { line-height: 1.25; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .select-none { user-select: none; }
+    .cursor-pointer { cursor: pointer; }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-x-auto { overflow-x: auto; }
+
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-full { border-radius: 9999px; }
+
+    .border { border: 1px solid #e2e8f0; }
+    html.dark .border { border-color: #1e293b; }
+    .border-b { border-bottom: 1px solid #e2e8f0; }
+    html.dark .border-b { border-bottom-color: #1e293b; }
+    .border-t { border-top: 1px solid #e2e8f0; }
+    html.dark .border-t { border-top-color: #1e293b; }
+
+    .shadow-xs { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+    .shadow-sm { box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04); }
+    .shadow-md { box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.12); }
+    .shadow-lg { box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25); }
+
+    /* ポジション＆オーバーレイ */
+    .sticky { position: sticky; }
+    .top-0 { top: 0; }
+    .z-10 { z-index: 10; }
+    .z-30 { z-index: 30; }
+    .z-50 { z-index: 50; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .fixed { position: fixed; }
+    .bottom-5 { bottom: 1.25rem; }
+    .right-5 { right: 1.25rem; }
+    .left-3 { left: 0.75rem; }
+    .top-2\.5 { top: 0.625rem; }
+    .pointer-events-none { pointer-events: none; }
+    .pointer-events-auto { pointer-events: auto; }
+    .transition { transition: all 0.15s ease; }
+    .transition-all { transition: all 0.18s ease; }
+    .transition-colors { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+    .duration-300 { transition-duration: 300ms; }
+    .transform { transform: translateY(0); }
+    .translate-y-2 { transform: translateY(0.5rem); }
+    .opacity-0 { opacity: 0; }
+    .opacity-75 { opacity: 0.75; }
+
+    /* カラートークン */
+    .bg-white { background-color: #ffffff; }
+    html.dark .bg-white { background-color: #0f172a; }
+    html.dark .dark\:bg-slate-900 { background-color: #0f172a; }
+    html.dark .dark\:bg-slate-950 { background-color: #020617; }
+    html.dark .dark\:bg-slate-800 { background-color: #1e293b; }
+    html.dark .dark\:bg-slate-800\/80 { background-color: rgba(30, 41, 59, 0.8); }
+    html.dark .dark\:bg-slate-800\/40 { background-color: rgba(30, 41, 59, 0.4); }
+    html.dark .dark\:bg-slate-700 { background-color: #334155; }
+    html.dark .dark\:bg-indigo-950 { background-color: #1e1b4b; }
+    html.dark .dark\:bg-indigo-950\/50 { background-color: rgba(30, 27, 75, 0.5); }
+    .bg-slate-50 { background-color: #f8fafc; }
+    .bg-slate-100 { background-color: #f1f5f9; }
+    .bg-slate-200 { background-color: #e2e8f0; }
+    .bg-slate-300 { background-color: #cbd5e1; }
+    html.dark .dark\:bg-slate-600 { background-color: #475569; }
+    .bg-slate-400 { background-color: #94a3b8; }
+    .bg-slate-900 { background-color: #0f172a; }
+    .bg-indigo-600 { background-color: #4f46e5; color: #ffffff; }
+    .bg-indigo-600:hover { background-color: #4338ca; }
+    .bg-indigo-100 { background-color: #e0e7ff; }
+    .bg-indigo-50\/90 { background-color: rgba(238, 242, 255, 0.9); }
+    .bg-indigo-500 { background-color: #6366f1; }
+    .bg-sky-500 { background-color: #0ea5e9; }
+    .bg-rose-500 { background-color: #f43f5e; }
+    .bg-rose-600 { background-color: #e11d48; }
+    .bg-emerald-500 { background-color: #10b981; }
+
+    .text-white { color: #ffffff; }
+    .text-slate-400 { color: #94a3b8; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-900 { color: #0f172a; }
+    html.dark .dark\:text-white { color: #ffffff; }
+    html.dark .dark\:text-slate-100 { color: #f1f5f9; }
+    html.dark .dark\:text-slate-200 { color: #e2e8f0; }
+    html.dark .dark\:text-slate-300 { color: #cbd5e1; }
+    html.dark .dark\:text-slate-400 { color: #94a3b8; }
+    .text-indigo-500 { color: #6366f1; }
+    .text-indigo-600 { color: #4f46e5; }
+    html.dark .dark\:text-indigo-400 { color: #818cf8; }
+    .text-indigo-700 { color: #4338ca; }
+    html.dark .dark\:text-indigo-300 { color: #a5b4fc; }
+    .text-amber-400 { color: #fbbf24; }
+
+    .border-slate-100 { border-color: #f1f5f9; }
+    .border-slate-200 { border-color: #e2e8f0; }
+    .border-slate-700 { border-color: #334155; }
+    html.dark .dark\:border-slate-800 { border-color: #1e293b; }
+    html.dark .dark\:border-slate-700 { border-color: #334155; }
+    html.dark .dark\:border-slate-700\/60 { border-color: rgba(51, 65, 85, 0.6); }
+    .border-rose-500 { border-color: #f43f5e; }
+
+    /* メーカーバッジ */
+    .maker-pill-intel {
+      background-color: rgba(14, 165, 233, 0.12);
+      color: #0369a1;
+      border-color: rgba(14, 165, 233, 0.35);
+    }
+    html.dark .maker-pill-intel {
+      color: #7dd3fc;
+    }
+    .maker-pill-intel:hover {
+      background-color: rgba(14, 165, 233, 0.22);
+    }
+
+    .maker-pill-amd {
+      background-color: rgba(244, 63, 94, 0.12);
+      color: #be123c;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+    html.dark .maker-pill-amd {
+      color: #fda4af;
+    }
+    .maker-pill-amd:hover {
+      background-color: rgba(244, 63, 94, 0.22);
+    }
+
+    .maker-pill-nvidia {
+      background-color: rgba(16, 185, 129, 0.12);
+      color: #047857;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    html.dark .maker-pill-nvidia {
+      color: #6ee7b7;
+    }
+    .maker-pill-nvidia:hover {
+      background-color: rgba(16, 185, 129, 0.22);
+    }
+
+    .maker-pill-default {
+      background-color: rgba(100, 116, 139, 0.12);
+      color: #334155;
+      border-color: rgba(100, 116, 139, 0.35);
+    }
+    html.dark .maker-pill-default {
+      color: #cbd5e1;
+    }
+
+    /* ホバー＆フォーカス状態 */
+    button:hover,
+    a:hover,
+    .hover\:bg-slate-100:hover {
+      background-color: #f1f5f9;
+    }
+    html.dark button:hover,
+    html.dark a:hover,
+    html.dark .dark\:hover\:bg-slate-700:hover {
+      background-color: #334155;
+    }
+    html.dark .dark\:hover\:bg-slate-800:hover {
+      background-color: #1e293b;
+    }
+    .hover\:bg-indigo-600:hover,
+    html.dark .dark\:hover\:bg-indigo-600:hover {
+      background-color: #4f46e5;
+      color: #ffffff;
+    }
+    .hover\:underline:hover {
+      text-decoration: underline;
+    }
+    .hover\:bg-slate-50:hover {
+      background-color: #f8fafc;
+    }
+    html.dark .dark\:hover\:bg-slate-800\/50:hover {
+      background-color: rgba(30, 41, 59, 0.5);
+    }
+    .hover\:bg-slate-200\/70:hover {
+      background-color: rgba(226, 232, 240, 0.7);
+    }
+    html.dark .dark\:hover\:bg-slate-700\/70:hover {
+      background-color: rgba(51, 65, 85, 0.7);
+    }
+    html.dark .dark\:hover\:text-white:hover {
+      color: #ffffff;
+    }
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+    }
+
+    /* ヘッダー・ブランドアイコン・フォーム要素 */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid #e2e8f0;
+      background-color: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+    }
+    html.dark .app-header {
+      border-bottom-color: #1e293b;
+      background-color: rgba(15, 23, 42, 0.92);
+    }
+    .brand-badge {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, #6366f1, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+      flex-shrink: 0;
+    }
+    .theme-btn {
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    html.dark .theme-btn {
+      background-color: #1e293b;
+      border-color: #334155;
+    }
+    .icon-sun { display: none; }
+    .icon-moon { display: block; color: #334155; }
+    html.dark .icon-sun { display: block; color: #fbbf24; }
+    html.dark .icon-moon { display: none; }
+
+    .input-control {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 0.75rem;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+    }
+    html.dark .input-control {
+      background-color: rgba(30, 41, 59, 0.8);
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    .input-control.with-icon {
+      padding-left: 2.25rem;
+    }
+    .select-control {
+      width: 100%;
+      padding: 0.375rem 0.625rem;
+      font-size: 0.875rem;
+      border-radius: 0.75rem;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+    }
+    html.dark .select-control {
+      background-color: rgba(30, 41, 59, 0.8);
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    .range-control {
+      width: 100%;
+      accent-color: #4f46e5;
+      cursor: pointer;
+    }
+
+    /* テーブルスタイル */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .table-head {
+      background-color: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+    }
+    html.dark .table-head {
+      background-color: #1e293b;
+      border-bottom-color: #334155;
+      color: #cbd5e1;
+    }
+    .table-body {
+      font-size: 0.875rem;
+    }
+    .table-body tr {
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    html.dark .table-body tr {
+      border-bottom-color: rgba(30, 41, 59, 0.8);
+    }
+    .table-body tr:last-child {
+      border-bottom: none;
+    }
+    .progress-track {
+      flex: 1;
+      height: 0.625rem;
+      border-radius: 9999px;
+      background-color: #f1f5f9;
+      overflow: hidden;
+    }
+    html.dark .progress-track {
+      background-color: #1e293b;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 9999px;
+    }
+
+    /* レスポンシブ */
+    .main-layout {
+      flex: 1 1 auto;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .sidebar-panel {
+      width: 100%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    @media (min-width: 640px) {
+      .main-layout {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      .header-inner {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      .sm-text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+      .sm-text-lg {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+      }
+      .sm-text-sm-cell {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+    }
+    @media (min-width: 1024px) {
+      .main-layout {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+      .sidebar-panel {
+        width: 20rem;
+      }
+    }
+    .header-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200 selection:bg-indigo-500 selection:text-white">
+
+  <!-- 通知トースト -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="flex items-center gap-3">
+        <div class="brand-badge">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <rect x="9" y="9" width="6" height="6" />
+            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base sm-text-lg font-bold tracking-tight leading-tight">CPU・GPU スペック比較＆マトリクス</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">2020–2026 デスクトップ向けモデルスペック比較 (PassMark / Time Spy)</p>
+        </div>
+      </div>
+
+      <!-- メイン表示モード切替タブ & アクション -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- テーマ切替 -->
+        <button onclick="toggleTheme()" class="theme-btn" title="ライト/ダークモード切替" aria-label="テーマ切替">
+          <svg id="icon-sun" class="w-4 h-4 icon-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg id="icon-moon" class="w-4 h-4 icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテナ -->
+  <main class="main-layout">
+
+    <!-- 左サイドバー：スペック検索・絞り込みパネル -->
+    <aside id="filter-sidebar" class="sidebar-panel">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+        <!-- 対象デバイス切替 (CPU / GPU) -->
+        <div class="mb-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">対象パーツ切替</label>
+          <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+            <button id="cat-btn-cpu" onclick="switchCategory('cpu')" class="py-2 px-3 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm flex items-center justify-center gap-1.5">
+              <span>CPU</span>
+              <span id="badge-total-cpu" class="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">103</span>
+            </button>
+            <button id="cat-btn-gpu" onclick="switchCategory('gpu')" class="py-2 px-3 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5">
+              <span>GPU</span>
+              <span id="badge-total-gpu" class="px-1.5 py-0.5 text-[10px] rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">47</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mb-3">
+          <h2 class="text-sm font-bold flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span>スペック絞り込み</span>
+          </h2>
+          <button onclick="resetFilters()" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">リセット</button>
+        </div>
+
+        <!-- 製品名検索 -->
+        <div class="mb-4">
+          <label for="filter-keyword" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">製品名キーワード</label>
+          <div class="relative">
+            <input id="filter-keyword" type="text" oninput="applyFilters()" placeholder="例: 9800X3D, RTX 5070, i7..." class="input-control with-icon" />
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+        </div>
+
+        <!-- メーカー選択 -->
+        <div class="mb-4">
+          <span class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">メーカー</span>
+          <div id="maker-checkboxes" class="flex flex-wrap gap-2">
+            <!-- JSで動的生成 -->
+          </div>
+        </div>
+
+        <!-- 発売年範囲 -->
+        <div class="mb-4">
+          <span class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">発売年</span>
+          <div class="flex items-center gap-2">
+            <select id="filter-year-min" onchange="applyFilters()" class="select-control">
+              <option value="2020" selected>2020年</option>
+              <option value="2021">2021年</option>
+              <option value="2022">2022年</option>
+              <option value="2023">2023年</option>
+              <option value="2024">2024年</option>
+              <option value="2025">2025年</option>
+              <option value="2026">2026年</option>
+            </select>
+            <span class="text-slate-400 text-xs">〜</span>
+            <select id="filter-year-max" onchange="applyFilters()" class="select-control">
+              <option value="2020">2020年</option>
+              <option value="2021">2021年</option>
+              <option value="2022">2022年</option>
+              <option value="2023">2023年</option>
+              <option value="2024">2024年</option>
+              <option value="2025">2025年</option>
+              <option value="2026" selected>2026年</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- CPU専用フィルター -->
+        <div id="cpu-specific-filters" class="space-y-4">
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <span>最小コア数</span>
+              <span id="val-min-cores" class="text-indigo-500 font-bold">指定なし (6+)</span>
+            </div>
+            <input id="filter-min-cores" type="range" min="6" max="24" step="2" value="6" oninput="applyFilters()" class="range-control" />
+            <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <span>6</span><span>10</span><span>14</span><span>18</span><span>24</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <span>最小スレッド数</span>
+              <span id="val-min-threads" class="text-indigo-500 font-bold">指定なし (10+)</span>
+            </div>
+            <input id="filter-min-threads" type="range" min="10" max="32" step="2" value="10" oninput="applyFilters()" class="range-control" />
+            <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <span>10</span><span>16</span><span>20</span><span>24</span><span>32</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <span>最小ベンチマーク (PassMark)</span>
+              <span id="val-min-cpu-bench" class="text-indigo-500 font-bold">13,000+</span>
+            </div>
+            <input id="filter-min-cpu-bench" type="range" min="13000" max="67000" step="1000" value="13000" oninput="applyFilters()" class="range-control" />
+            <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <span>13,000</span><span>30,000</span><span>50,000</span><span>67,000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GPU専用フィルター -->
+        <div id="gpu-specific-filters" class="space-y-4 hidden">
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <span>最小搭載メモリ (VRAM)</span>
+              <span id="val-min-vram" class="text-indigo-500 font-bold">指定なし (8GB+)</span>
+            </div>
+            <select id="filter-min-vram" onchange="applyFilters()" class="select-control">
+              <option value="8" selected>8 GB 以上（すべて）</option>
+              <option value="10">10 GB 以上</option>
+              <option value="12">12 GB 以上</option>
+              <option value="16">16 GB 以上</option>
+              <option value="20">20 GB 以上</option>
+              <option value="24">24 GB 以上</option>
+              <option value="32">32 GB 以上</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <span>最小ベンチマーク (Time Spy)</span>
+              <span id="val-min-gpu-bench" class="text-indigo-500 font-bold">7,500+</span>
+            </div>
+            <input id="filter-min-gpu-bench" type="range" min="7500" max="47000" step="500" value="7500" oninput="applyFilters()" class="range-control" />
+            <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <span>7,500</span><span>20,000</span><span>35,000</span><span>47,000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 検索結果サマリー -->
+        <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            一致件数: <span id="filtered-count" class="text-base font-bold text-slate-900 dark:text-white">103</span> 件
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右メインコンテンツエリア -->
+    <section class="flex-1 min-w-0 flex flex-col gap-4">
+
+      <!-- 表示タブ切替 -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <button id="main-tab-games" type="button" onclick="switchMainTab('games')"
+            class="px-4 py-2 rounded-xl text-xs sm-text-sm font-bold transition-all bg-indigo-600 text-white shadow-sm">
+            ゲーム別 必要スペック一覧
+          </button>
+          <button id="main-tab-specs" type="button" onclick="switchMainTab('specs')"
+            class="px-4 py-2 rounded-xl text-xs sm-text-sm font-bold transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+            スペック比較テーブル
+          </button>
+        </div>
+        <div class="px-2 text-xs text-slate-500 dark:text-slate-400">
+          ゲーム選択で左の検索条件に自動反映
+        </div>
+      </div>
+
+      <!-- ゲーム必要スペック一覧表 -->
+      <div id="view-games" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base font-bold">ゲーム別 必要スペック目安一覧</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">行または「条件に反映」をクリックすると、左側の検索・絞り込み条件にスペック目安が反映されます</p>
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            選択中: <span id="selected-game-label" class="font-semibold text-indigo-600 dark:text-indigo-400">未選択</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-[760px]">
+            <thead class="table-head">
+              <tr>
+                <th class="p-3">タイトル</th>
+                <th class="p-3">ジャンル</th>
+                <th class="p-3">CPU目安</th>
+                <th class="p-3">GPU目安</th>
+                <th class="p-3">想定環境</th>
+                <th class="p-3 text-right w-28">条件反映</th>
+              </tr>
+            </thead>
+            <tbody id="game-spec-tbody" class="table-body">
+              <!-- JSで動的生成 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- スペック検索・ソート可能一覧比較テーブル -->
+      <div id="view-list" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="list-title" class="text-base font-bold">CPU スペック一覧比較テーブル</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">列見出しをクリックすると昇順・降順で並べ替えができます</p>
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            基準比較: <span id="baseline-note" class="font-semibold text-slate-700 dark:text-slate-200">Core i5-10400F (12,300) 超えモデル</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[72vh]">
+          <table class="min-w-[680px]">
+            <thead id="list-thead" class="table-head sticky top-0 z-10 select-none">
+              <!-- JSで動的生成 -->
+            </thead>
+            <tbody id="list-tbody" class="table-body">
+              <!-- JSで動的生成 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const GAME_SPEC_PRESETS = [
+      {
+        id: 'poe2',
+        game: 'Path of Exile 2 (POE2)',
+        genre: 'アクションRPG',
+        resolution: 'FHD〜WQHD (60〜120fps目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 22,000+ 目安',
+        gpuReq: 'VRAM 8〜12GB · Time Spy 13,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 22000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 13000 }
+      },
+      {
+        id: 'once-human',
+        game: 'Once Human（ワンスヒューマン）',
+        genre: 'オープンワールドサバイバル',
+        resolution: 'FHD〜WQHD (60fps+目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 20,000+ 目安',
+        gpuReq: 'VRAM 8〜12GB · Time Spy 12,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 20000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 12000 }
+      },
+      {
+        id: 'minecraft',
+        game: 'Minecraft（統合版 / シェーダー・大規模建築）',
+        genre: 'サンドボックス',
+        resolution: 'FHD〜WQHD (高fps/シェーダー目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 21,000+ 目安',
+        gpuReq: 'VRAM 8〜12GB · Time Spy 11,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 21000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11000 }
+      },
+      {
+        id: 'mhw',
+        game: 'モンスターハンター：ワールド',
+        genre: 'ハンティングアクション',
+        resolution: 'FHD〜WQHD (60fps+目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 18,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 11,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 11500 }
+      },
+      {
+        id: 'gta5',
+        game: 'Grand Theft Auto V (GTA5)',
+        genre: 'オープンワールドアクション',
+        resolution: 'FHD〜WQHD (高設定目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 15,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 9,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 15000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 9500 }
+      },
+      {
+        id: 'black-desert',
+        game: '黒い砂漠 (Black Desert)',
+        genre: 'MMORPG',
+        resolution: 'FHD〜WQHD (Remastered目安)',
+        cpuReq: '8コア / 16スレッド · PassMark 26,000+ 目安',
+        gpuReq: 'VRAM 12GB · Time Spy 17,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 8, minThreads: 16, minCpuBench: 26000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 12, minGpuBench: 17500 }
+      },
+      {
+        id: 'shadowverse-wb',
+        game: 'Shadowverse: Worlds Beyond',
+        genre: 'デジタルTCG',
+        resolution: 'FHD〜4K (60〜120fps目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 14,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 8,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 14000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 8000 }
+      },
+      {
+        id: 'cheat-yusha',
+        game: 'チート勇者',
+        genre: 'RPG・放置/育成アクション',
+        resolution: 'FHD〜WQHD (快適動作目安)',
+        cpuReq: '6コア / 10スレッド · PassMark 13,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 10, minCpuBench: 13000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 7500 }
+      },
+      {
+        id: 'hp-magic-awakened',
+        game: 'ハリー・ポッター：魔法の覚醒',
+        genre: 'リアルタイムカードバトル / RPG',
+        resolution: 'FHD〜WQHD (60fps目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 15,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 8,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 15000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 8500 }
+      },
+      {
+        id: 'mabinogi-mobile',
+        game: 'マビノギモバイル',
+        genre: 'MMORPG',
+        resolution: 'FHD〜WQHD (60fps目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 18,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 10,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 18000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 10500 }
+      },
+      {
+        id: 'dungeon-slasher',
+        game: 'ダンジョンスラッシャー',
+        genre: 'ハクスラ / アクションRPG',
+        resolution: 'FHD〜WQHD (60〜120fps目安)',
+        cpuReq: '6コア / 12スレッド · PassMark 17,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 10,000+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 12, minCpuBench: 17000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 10000 }
+      },
+      {
+        id: 'mario-party',
+        game: 'マリオパーティ',
+        genre: 'パーティ / ミニゲーム',
+        resolution: 'FHD (60fps目安)',
+        cpuReq: '6コア / 10スレッド · PassMark 13,000+ 目安',
+        gpuReq: 'VRAM 8GB · Time Spy 7,500+ 目安',
+        filter: { makers: ['Intel', 'AMD'], yearMin: 2023, yearMax: 2026, minCores: 6, minThreads: 10, minCpuBench: 13000 },
+        gpuFilter: { makers: ['NVIDIA', 'AMD', 'Intel'], yearMin: 2023, yearMax: 2026, minVram: 8, minGpuBench: 7500 }
+      }
+    ];
+
+    let selectedGameId = null;
+
+    function renderGameSpecTable() {
+      const tbody = document.getElementById('game-spec-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = GAME_SPEC_PRESETS.map(item => {
+        const isSelected = selectedGameId === item.id;
+        return `
+          <tr onclick="applyGameSpecToFilter('${item.id}')"
+              class="cursor-pointer transition-colors ${
+                isSelected
+                  ? 'bg-indigo-50/90 dark:bg-indigo-950/50'
+                  : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              }">
+            <td class="p-3 font-bold text-slate-800 dark:text-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full ${isSelected ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}"></span>
+                <span>${item.game}</span>
+              </div>
+            </td>
+            <td class="p-3 text-xs text-slate-600 dark:text-slate-300">${item.genre}</td>
+            <td class="p-3 text-xs font-mono text-slate-600 dark:text-slate-300">${item.cpuReq}</td>
+            <td class="p-3 text-xs font-mono text-slate-600 dark:text-slate-300">${item.gpuReq}</td>
+            <td class="p-3 text-xs text-slate-500 dark:text-slate-400">${item.resolution}</td>
+            <td class="p-3 text-right">
+              <button type="button" onclick="event.stopPropagation(); applyGameSpecToFilter('${item.id}')"
+                class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600'
+                }">
+                ${isSelected ? '反映中' : '条件に反映'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    let activeMainTab = 'games';
+
+    function switchMainTab(tab) {
+      activeMainTab = tab;
+      const gamesView = document.getElementById('view-games');
+      const listView = document.getElementById('view-list');
+      const tabGamesBtn = document.getElementById('main-tab-games');
+      const tabSpecsBtn = document.getElementById('main-tab-specs');
+
+      if (tab === 'games') {
+        gamesView.classList.remove('hidden');
+        listView.classList.add('hidden');
+        tabGamesBtn.className = 'px-4 py-2 rounded-xl text-xs sm-text-sm font-bold transition-all bg-indigo-600 text-white shadow-sm';
+        tabSpecsBtn.className = 'px-4 py-2 rounded-xl text-xs sm-text-sm font-bold transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+      } else {
+        gamesView.classList.add('hidden');
+        listView.classList.remove('hidden');
+        tabSpecsBtn.className = 'px-4 py-2 rounded-xl text-xs sm-text-sm font-bold transition-all bg-indigo-600 text-white shadow-sm';
+        tabGamesBtn.className = 'px-4 py-2 rounded-xl text-xs sm-text-sm font-bold transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+      }
+    }
+
+    function applyGameSpecToFilter(gameId) {
+      const preset = GAME_SPEC_PRESETS.find(g => g.id === gameId);
+      if (!preset) return;
+      selectedGameId = gameId;
+      document.getElementById('selected-game-label').textContent = preset.game;
+
+      document.getElementById('filter-keyword').value = '';
+      document.getElementById('filter-year-min').value = String(preset.filter.yearMin);
+      document.getElementById('filter-year-max').value = String(preset.filter.yearMax);
+
+      if (currentCategory === 'cpu') {
+        selectedMakers = new Set(preset.filter.makers);
+        document.getElementById('filter-min-cores').value = String(preset.filter.minCores);
+        document.getElementById('filter-min-threads').value = String(preset.filter.minThreads);
+        document.getElementById('filter-min-cpu-bench').value = String(preset.filter.minCpuBench);
+      } else {
+        selectedMakers = new Set(preset.gpuFilter.makers);
+        document.getElementById('filter-min-vram').value = String(preset.gpuFilter.minVram);
+        document.getElementById('filter-min-gpu-bench').value = String(preset.gpuFilter.minGpuBench);
+      }
+
+      renderMakerCheckboxes();
+      renderGameSpecTable();
+      applyFilters();
+      switchMainTab('specs');
+      showToast(`「${preset.game}」を反映し、スペック一覧タブに切り替えました`);
+    }
+
+    const DEFAULT_CPU_DATA = [
+      {"メーカー": "Intel", "製品名": "Core i5-10500", "発売年": 2020, "コア数": 6, "スレッド数": 12, "ベンチマーク": 13000},
+      {"メーカー": "Intel", "製品名": "Core i5-10600", "発売年": 2020, "コア数": 6, "スレッド数": 12, "ベンチマーク": 13700},
+      {"メーカー": "Intel", "製品名": "Core i5-10600KF", "発売年": 2020, "コア数": 6, "スレッド数": 12, "ベンチマーク": 14500},
+      {"メーカー": "Intel", "製品名": "Core i5-10600K", "発売年": 2020, "コア数": 6, "スレッド数": 12, "ベンチマーク": 14550},
+      {"メーカー": "Intel", "製品名": "Core i7-10700F", "発売年": 2020, "コア数": 8, "スレッド数": 16, "ベンチマーク": 16800},
+      {"メーカー": "Intel", "製品名": "Core i7-10700", "発売年": 2020, "コア数": 8, "スレッド数": 16, "ベンチマーク": 16900},
+      {"メーカー": "Intel", "製品名": "Core i7-10700KF", "発売年": 2020, "コア数": 8, "スレッド数": 16, "ベンチマーク": 19100},
+      {"メーカー": "Intel", "製品名": "Core i7-10700K", "発売年": 2020, "コア数": 8, "スレッド数": 16, "ベンチマーク": 19200},
+      {"メーカー": "Intel", "製品名": "Core i9-10850K", "発売年": 2020, "コア数": 10, "スレッド数": 20, "ベンチマーク": 22900},
+      {"メーカー": "Intel", "製品名": "Core i9-10900F", "発売年": 2020, "コア数": 10, "スレッド数": 20, "ベンチマーク": 21200},
+      {"メーカー": "Intel", "製品名": "Core i9-10900", "発売年": 2020, "コア数": 10, "スレッド数": 20, "ベンチマーク": 21400},
+      {"メーカー": "Intel", "製品名": "Core i9-10900KF", "発売年": 2020, "コア数": 10, "スレッド数": 20, "ベンチマーク": 23400},
+      {"メーカー": "Intel", "製品名": "Core i9-10900K", "発売年": 2020, "コア数": 10, "スレッド数": 20, "ベンチマーク": 23500},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 5600X", "発売年": 2020, "コア数": 6, "スレッド数": 12, "ベンチマーク": 21900},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 5800X", "発売年": 2020, "コア数": 8, "スレッド数": 16, "ベンチマーク": 28400},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 5900X", "発売年": 2020, "コア数": 12, "スレッド数": 24, "ベンチマーク": 39100},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 5950X", "発売年": 2020, "コア数": 16, "スレッド数": 32, "ベンチマーク": 45700},
+      {"メーカー": "Intel", "製品名": "Core i5-11400F", "発売年": 2021, "コア数": 6, "スレッド数": 12, "ベンチマーク": 17100},
+      {"メーカー": "Intel", "製品名": "Core i5-11400", "発売年": 2021, "コア数": 6, "スレッド数": 12, "ベンチマーク": 17200},
+      {"メーカー": "Intel", "製品名": "Core i5-11500", "発売年": 2021, "コア数": 6, "スレッド数": 12, "ベンチマーク": 17600},
+      {"メーカー": "Intel", "製品名": "Core i5-11600K", "発売年": 2021, "コア数": 6, "スレッド数": 12, "ベンチマーク": 19800},
+      {"メーカー": "Intel", "製品名": "Core i7-11700F", "発売年": 2021, "コア数": 8, "スレッド数": 16, "ベンチマーク": 20300},
+      {"メーカー": "Intel", "製品名": "Core i7-11700", "発売年": 2021, "コア数": 8, "スレッド数": 16, "ベンチマーク": 20500},
+      {"メーカー": "Intel", "製品名": "Core i7-11700K", "発売年": 2021, "コア数": 8, "スレッド数": 16, "ベンチマーク": 24700},
+      {"メーカー": "Intel", "製品名": "Core i9-11900K", "発売年": 2021, "コア数": 8, "スレッド数": 16, "ベンチマーク": 25400},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 5600G", "発売年": 2021, "コア数": 6, "スレッド数": 12, "ベンチマーク": 19800},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 5700G", "発売年": 2021, "コア数": 8, "スレッド数": 16, "ベンチマーク": 24500},
+      {"メーカー": "Intel", "製品名": "Core i5-12600KF", "発売年": 2021, "コア数": 10, "スレッド数": 16, "ベンチマーク": 27600},
+      {"メーカー": "Intel", "製品名": "Core i5-12600K", "発売年": 2021, "コア数": 10, "スレッド数": 16, "ベンチマーク": 27700},
+      {"メーカー": "Intel", "製品名": "Core i7-12700KF", "発売年": 2021, "コア数": 12, "スレッド数": 20, "ベンチマーク": 34500},
+      {"メーカー": "Intel", "製品名": "Core i7-12700K", "発売年": 2021, "コア数": 12, "スレッド数": 20, "ベンチマーク": 34600},
+      {"メーカー": "Intel", "製品名": "Core i9-12900KF", "発売年": 2021, "コア数": 16, "スレッド数": 24, "ベンチマーク": 41200},
+      {"メーカー": "Intel", "製品名": "Core i9-12900K", "発売年": 2021, "コア数": 16, "スレッド数": 24, "ベンチマーク": 41400},
+      {"メーカー": "Intel", "製品名": "Core i5-12400F", "発売年": 2022, "コア数": 6, "スレッド数": 12, "ベンチマーク": 19500},
+      {"メーカー": "Intel", "製品名": "Core i5-12400", "発売年": 2022, "コア数": 6, "スレッド数": 12, "ベンチマーク": 19600},
+      {"メーカー": "Intel", "製品名": "Core i7-12700F", "発売年": 2022, "コア数": 12, "スレッド数": 20, "ベンチマーク": 31000},
+      {"メーカー": "Intel", "製品名": "Core i7-12700", "発売年": 2022, "コア数": 12, "スレッド数": 20, "ベンチマーク": 31200},
+      {"メーカー": "Intel", "製品名": "Core i9-12900F", "発売年": 2022, "コア数": 16, "スレッド数": 24, "ベンチマーク": 36800},
+      {"メーカー": "Intel", "製品名": "Core i9-12900KS", "発売年": 2022, "コア数": 16, "スレッド数": 24, "ベンチマーク": 43800},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 5500", "発売年": 2022, "コア数": 6, "スレッド数": 12, "ベンチマーク": 19500},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 5600", "発売年": 2022, "コア数": 6, "スレッド数": 12, "ベンチマーク": 21600},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 5700X", "発売年": 2022, "コア数": 8, "スレッド数": 16, "ベンチマーク": 26700},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 5800X3D", "発売年": 2022, "コア数": 8, "スレッド数": 16, "ベンチマーク": 28200},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 7600X", "発売年": 2022, "コア数": 6, "スレッド数": 12, "ベンチマーク": 28500},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 7700X", "発売年": 2022, "コア数": 8, "スレッド数": 16, "ベンチマーク": 36100},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 7900X", "発売年": 2022, "コア数": 12, "スレッド数": 24, "ベンチマーク": 51800},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 7950X", "発売年": 2022, "コア数": 16, "スレッド数": 32, "ベンチマーク": 62800},
+      {"メーカー": "Intel", "製品名": "Core i5-13600KF", "発売年": 2022, "コア数": 14, "スレッド数": 20, "ベンチマーク": 37900},
+      {"メーカー": "Intel", "製品名": "Core i5-13600K", "発売年": 2022, "コア数": 14, "スレッド数": 20, "ベンチマーク": 38000},
+      {"メーカー": "Intel", "製品名": "Core i7-13700KF", "発売年": 2022, "コア数": 16, "スレッド数": 24, "ベンチマーク": 46500},
+      {"メーカー": "Intel", "製品名": "Core i7-13700K", "発売年": 2022, "コア数": 16, "スレッド数": 24, "ベンチマーク": 46600},
+      {"メーカー": "Intel", "製品名": "Core i9-13900KF", "発売年": 2022, "コア数": 24, "スレッド数": 32, "ベンチマーク": 59200},
+      {"メーカー": "Intel", "製品名": "Core i9-13900K", "発売年": 2022, "コア数": 24, "スレッド数": 32, "ベンチマーク": 59500},
+      {"メーカー": "Intel", "製品名": "Core i5-13400F", "発売年": 2023, "コア数": 10, "スレッド数": 16, "ベンチマーク": 25800},
+      {"メーカー": "Intel", "製品名": "Core i5-13400", "発売年": 2023, "コア数": 10, "スレッド数": 16, "ベンチマーク": 25900},
+      {"メーカー": "Intel", "製品名": "Core i5-13500", "発売年": 2023, "コア数": 14, "スレッド数": 20, "ベンチマーク": 32100},
+      {"メーカー": "Intel", "製品名": "Core i7-13700F", "発売年": 2023, "コア数": 16, "スレッド数": 24, "ベンチマーク": 41500},
+      {"メーカー": "Intel", "製品名": "Core i7-13700", "発売年": 2023, "コア数": 16, "スレッド数": 24, "ベンチマーク": 41700},
+      {"メーカー": "Intel", "製品名": "Core i9-13900KS", "発売年": 2023, "コア数": 24, "スレッド数": 32, "ベンチマーク": 61800},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 7600", "発売年": 2023, "コア数": 6, "スレッド数": 12, "ベンチマーク": 27200},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 7700", "発売年": 2023, "コア数": 8, "スレッド数": 16, "ベンチマーク": 34800},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 7900", "発売年": 2023, "コア数": 12, "スレッド数": 24, "ベンチマーク": 48800},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 7800X3D", "発売年": 2023, "コア数": 8, "スレッド数": 16, "ベンチマーク": 34300},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 7900X3D", "発売年": 2023, "コア数": 12, "スレッド数": 24, "ベンチマーク": 49500},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 7950X3D", "発売年": 2023, "コア数": 16, "スレッド数": 32, "ベンチマーク": 62500},
+      {"メーカー": "Intel", "製品名": "Core i5-14600KF", "発売年": 2023, "コア数": 14, "スレッド数": 20, "ベンチマーク": 39100},
+      {"メーカー": "Intel", "製品名": "Core i5-14600K", "発売年": 2023, "コア数": 14, "スレッド数": 20, "ベンチマーク": 39300},
+      {"メーカー": "Intel", "製品名": "Core i7-14700KF", "発売年": 2023, "コア数": 20, "スレッド数": 28, "ベンチマーク": 53100},
+      {"メーカー": "Intel", "製品名": "Core i7-14700K", "発売年": 2023, "コア数": 20, "スレッド数": 28, "ベンチマーク": 53300},
+      {"メーカー": "Intel", "製品名": "Core i9-14900KF", "発売年": 2023, "コア数": 24, "スレッド数": 32, "ベンチマーク": 60100},
+      {"メーカー": "Intel", "製品名": "Core i9-14900K", "発売年": 2023, "コア数": 24, "スレッド数": 32, "ベンチマーク": 60300},
+      {"メーカー": "Intel", "製品名": "Core i5-14400F", "発売年": 2024, "コア数": 10, "スレッド数": 16, "ベンチマーク": 26500},
+      {"メーカー": "Intel", "製品名": "Core i5-14400", "発売年": 2024, "コア数": 10, "スレッド数": 16, "ベンチマーク": 26600},
+      {"メーカー": "Intel", "製品名": "Core i5-14500", "発売年": 2024, "コア数": 14, "スレッド数": 20, "ベンチマーク": 33200},
+      {"メーカー": "Intel", "製品名": "Core i7-14700F", "発売年": 2024, "コア数": 20, "スレッド数": 28, "ベンチマーク": 46800},
+      {"メーカー": "Intel", "製品名": "Core i7-14700", "発売年": 2024, "コア数": 20, "スレッド数": 28, "ベンチマーク": 47000},
+      {"メーカー": "Intel", "製品名": "Core i9-14900KS", "発売年": 2024, "コア数": 24, "スレッド数": 32, "ベンチマーク": 62400},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 5700X3D", "発売年": 2024, "コア数": 8, "スレッド数": 16, "ベンチマーク": 26500},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 8600G", "発売年": 2024, "コア数": 6, "スレッド数": 12, "ベンチマーク": 24800},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 8700G", "発売年": 2024, "コア数": 8, "スレッド数": 16, "ベンチマーク": 31800},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 9600X", "発売年": 2024, "コア数": 6, "スレッド数": 12, "ベンチマーク": 30100},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 9700X", "発売年": 2024, "コア数": 8, "スレッド数": 16, "ベンチマーク": 37400},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 9900X", "発売年": 2024, "コア数": 12, "スレッド数": 24, "ベンチマーク": 54600},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 9950X", "発売年": 2024, "コア数": 16, "スレッド数": 32, "ベンチマーク": 66400},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 9800X3D", "発売年": 2024, "コア数": 8, "スレッド数": 16, "ベンチマーク": 40100},
+      {"メーカー": "Intel", "製品名": "Core Ultra 5 245KF", "発売年": 2024, "コア数": 14, "スレッド数": 14, "ベンチマーク": 34600},
+      {"メーカー": "Intel", "製品名": "Core Ultra 5 245K", "発売年": 2024, "コア数": 14, "スレッド数": 14, "ベンチマーク": 34700},
+      {"メーカー": "Intel", "製品名": "Core Ultra 7 265KF", "発売年": 2024, "コア数": 20, "スレッド数": 20, "ベンチマーク": 49800},
+      {"メーカー": "Intel", "製品名": "Core Ultra 7 265K", "発売年": 2024, "コア数": 20, "スレッド数": 20, "ベンチマーク": 50000},
+      {"メーカー": "Intel", "製品名": "Core Ultra 9 285K", "発売年": 2024, "コア数": 24, "スレッド数": 24, "ベンチマーク": 61200},
+      {"メーカー": "Intel", "製品名": "Core Ultra 5 225F", "発売年": 2025, "コア数": 10, "スレッド数": 10, "ベンチマーク": 25500},
+      {"メーカー": "Intel", "製品名": "Core Ultra 5 235", "発売年": 2025, "コア数": 14, "スレッド数": 14, "ベンチマーク": 31500},
+      {"メーカー": "Intel", "製品名": "Core Ultra 7 265F", "発売年": 2025, "コア数": 20, "スレッド数": 20, "ベンチマーク": 44500},
+      {"メーカー": "Intel", "製品名": "Core Ultra 7 265", "発売年": 2025, "コア数": 20, "スレッド数": 20, "ベンチマーク": 44800},
+      {"メーカー": "Intel", "製品名": "Core Ultra 9 285", "発売年": 2025, "コア数": 24, "スレッド数": 24, "ベンチマーク": 55500},
+      {"メーカー": "AMD", "製品名": "Ryzen 5 9600", "発売年": 2025, "コア数": 6, "スレッド数": 12, "ベンチマーク": 28800},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 9900X3D", "発売年": 2025, "コア数": 12, "スレッド数": 24, "ベンチマーク": 53800},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 9950X3D", "発売年": 2025, "コア数": 16, "スレッド数": 32, "ベンチマーク": 66100},
+      {"メーカー": "Intel", "製品名": "Core Ultra 5 250KF Plus", "発売年": 2026, "コア数": 18, "スレッド数": 18, "ベンチマーク": 39500},
+      {"メーカー": "Intel", "製品名": "Core Ultra 5 250K Plus", "発売年": 2026, "コア数": 18, "スレッド数": 18, "ベンチマーク": 39700},
+      {"メーカー": "Intel", "製品名": "Core Ultra 7 270K Plus", "発売年": 2026, "コア数": 24, "スレッド数": 24, "ベンチマーク": 56500},
+      {"メーカー": "AMD", "製品名": "Ryzen 7 9850X3D", "発売年": 2026, "コア数": 8, "スレッド数": 16, "ベンチマーク": 41800},
+      {"メーカー": "AMD", "製品名": "Ryzen 9 9950X3D2", "発売年": 2026, "コア数": 16, "スレッド数": 32, "ベンチマーク": 67500}
+    ];
+
+    const DEFAULT_GPU_DATA = [
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3060 Ti", "発売年": 2020, "搭載メモリ数": 8, "ベンチマーク": 11964},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3070", "発売年": 2020, "搭載メモリ数": 8, "ベンチマーク": 13468},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3080", "発売年": 2020, "搭載メモリ数": 10, "ベンチマーク": 18169},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3090", "発売年": 2020, "搭載メモリ数": 24, "ベンチマーク": 19834},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6800", "発売年": 2020, "搭載メモリ数": 16, "ベンチマーク": 16200},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6800 XT", "発売年": 2020, "搭載メモリ数": 16, "ベンチマーク": 19733},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6900 XT", "発売年": 2020, "搭載メモリ数": 16, "ベンチマーク": 20152},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3060", "発売年": 2021, "搭載メモリ数": 12, "ベンチマーク": 7943},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3070 Ti", "発売年": 2021, "搭載メモリ数": 8, "ベンチマーク": 14837},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3080 Ti", "発売年": 2021, "搭載メモリ数": 12, "ベンチマーク": 19500},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6600", "発売年": 2021, "搭載メモリ数": 8, "ベンチマーク": 8642},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6600 XT", "発売年": 2021, "搭載メモリ数": 8, "ベンチマーク": 9862},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6700 XT", "発売年": 2021, "搭載メモリ数": 12, "ベンチマーク": 12940},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3080 (12GB)", "発売年": 2022, "搭載メモリ数": 12, "ベンチマーク": 19000},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 3090 Ti", "発売年": 2022, "搭載メモリ数": 24, "ベンチマーク": 21500},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4080", "発売年": 2022, "搭載メモリ数": 16, "ベンチマーク": 28007},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4090", "発売年": 2022, "搭載メモリ数": 24, "ベンチマーク": 36515},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6650 XT", "発売年": 2022, "搭載メモリ数": 8, "ベンチマーク": 10300},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6750 XT", "発売年": 2022, "搭載メモリ数": 12, "ベンチマーク": 13500},
+      {"メーカー": "AMD", "製品名": "Radeon RX 6950 XT", "発売年": 2022, "搭載メモリ数": 16, "ベンチマーク": 20938},
+      {"メーカー": "AMD", "製品名": "Radeon RX 7900 XT", "発売年": 2022, "搭載メモリ数": 20, "ベンチマーク": 27592},
+      {"メーカー": "AMD", "製品名": "Radeon RX 7900 XTX", "発売年": 2022, "搭載メモリ数": 24, "ベンチマーク": 30217},
+      {"メーカー": "Intel", "製品名": "Arc A750", "発売年": 2022, "搭載メモリ数": 8, "ベンチマーク": 11130},
+      {"メーカー": "Intel", "製品名": "Arc A770", "発売年": 2022, "搭載メモリ数": 16, "ベンチマーク": 13869},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4060", "発売年": 2023, "搭載メモリ数": 8, "ベンチマーク": 10886},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4060 Ti", "発売年": 2023, "搭載メモリ数": 8, "ベンチマーク": 13817},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4070", "発売年": 2023, "搭載メモリ数": 12, "ベンチマーク": 17854},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4070 Ti", "発売年": 2023, "搭載メモリ数": 12, "ベンチマーク": 21908},
+      {"メーカー": "AMD", "製品名": "Radeon RX 7600", "発売年": 2023, "搭載メモリ数": 8, "ベンチマーク": 11259},
+      {"メーカー": "AMD", "製品名": "Radeon RX 7700 XT", "発売年": 2023, "搭載メモリ数": 12, "ベンチマーク": 17011},
+      {"メーカー": "AMD", "製品名": "Radeon RX 7800 XT", "発売年": 2023, "搭載メモリ数": 16, "ベンチマーク": 19996},
+      {"メーカー": "Intel", "製品名": "Arc A580", "発売年": 2023, "搭載メモリ数": 8, "ベンチマーク": 9246},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4070 SUPER", "発売年": 2024, "搭載メモリ数": 12, "ベンチマーク": 20947},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4070 Ti SUPER", "発売年": 2024, "搭載メモリ数": 16, "ベンチマーク": 24500},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 4080 SUPER", "発売年": 2024, "搭載メモリ数": 16, "ベンチマーク": 28531},
+      {"メーカー": "AMD", "製品名": "Radeon RX 7600 XT", "発売年": 2024, "搭載メモリ数": 16, "ベンチマーク": 12002},
+      {"メーカー": "Intel", "製品名": "Arc B580", "発売年": 2024, "搭載メモリ数": 12, "ベンチマーク": 14500},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 5060", "発売年": 2025, "搭載メモリ数": 8, "ベンチマーク": 13925},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 5060 Ti", "発売年": 2025, "搭載メモリ数": 16, "ベンチマーク": 15804},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 5070", "発売年": 2025, "搭載メモリ数": 12, "ベンチマーク": 22241},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 5070 Ti", "発売年": 2025, "搭載メモリ数": 16, "ベンチマーク": 27490},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 5080", "発売年": 2025, "搭載メモリ数": 16, "ベンチマーク": 32778},
+      {"メーカー": "NVIDIA", "製品名": "GeForce RTX 5090", "発売年": 2025, "搭載メモリ数": 32, "ベンチマーク": 47541},
+      {"メーカー": "AMD", "製品名": "Radeon RX 9060 XT", "発売年": 2025, "搭載メモリ数": 16, "ベンチマーク": 16643},
+      {"メーカー": "AMD", "製品名": "Radeon RX 9070", "発売年": 2025, "搭載メモリ数": 16, "ベンチマーク": 26867},
+      {"メーカー": "AMD", "製品名": "Radeon RX 9070 XT", "発売年": 2025, "搭載メモリ数": 16, "ベンチマーク": 29689},
+      {"メーカー": "Intel", "製品名": "Arc B570", "発売年": 2025, "搭載メモリ数": 10, "ベンチマーク": 13000}
+    ];
+
+    let cpuData = [...DEFAULT_CPU_DATA];
+    let gpuData = [...DEFAULT_GPU_DATA];
+    let currentCategory = 'cpu';
+    let sortState = { key: 'ベンチマーク', dir: 'desc' };
+    let selectedMakers = new Set(['Intel', 'AMD', 'NVIDIA']);
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = type === 'error'
+        ? 'bg-rose-600 text-white border-rose-500'
+        : 'bg-slate-900 dark:bg-slate-800 text-white border-slate-700';
+      el.className = `pointer-events-auto px-4 py-2.5 rounded-xl border text-xs font-medium shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 ${colors}`;
+      el.textContent = message;
+      container.appendChild(el);
+      requestAnimationFrame(() => {
+        el.classList.remove('translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        el.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    function getMakerBadgeStyle(maker) {
+      switch (maker) {
+        case 'Intel':
+          return { pill: 'maker-pill-intel', dot: 'bg-sky-500', bar: 'bg-sky-500' };
+        case 'AMD':
+          return { pill: 'maker-pill-amd', dot: 'bg-rose-500', bar: 'bg-rose-500' };
+        case 'NVIDIA':
+          return { pill: 'maker-pill-nvidia', dot: 'bg-emerald-500', bar: 'bg-emerald-500' };
+        default:
+          return { pill: 'maker-pill-default', dot: 'bg-slate-500', bar: 'bg-indigo-500' };
+      }
+    }
+
+    function switchCategory(cat) {
+      currentCategory = cat;
+      const cpuBtn = document.getElementById('cat-btn-cpu');
+      const gpuBtn = document.getElementById('cat-btn-gpu');
+      const cpuFilters = document.getElementById('cpu-specific-filters');
+      const gpuFilters = document.getElementById('gpu-specific-filters');
+
+      if (cat === 'cpu') {
+        cpuBtn.className = 'py-2 px-3 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm flex items-center justify-center gap-1.5';
+        gpuBtn.className = 'py-2 px-3 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5';
+        cpuFilters.classList.remove('hidden');
+        gpuFilters.classList.add('hidden');
+      } else {
+        gpuBtn.className = 'py-2 px-3 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm flex items-center justify-center gap-1.5';
+        cpuBtn.className = 'py-2 px-3 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5';
+        gpuFilters.classList.remove('hidden');
+        cpuFilters.classList.add('hidden');
+      }
+
+      if ((cat === 'cpu' && sortState.key === '搭載メモリ数') ||
+          (cat === 'gpu' && (sortState.key === 'コア数' || sortState.key === 'スレッド数'))) {
+        sortState = { key: 'ベンチマーク', dir: 'desc' };
+      }
+
+      if (selectedGameId) {
+        const preset = GAME_SPEC_PRESETS.find(g => g.id === selectedGameId);
+        if (preset) {
+          if (cat === 'cpu') {
+            selectedMakers = new Set(preset.filter.makers);
+            document.getElementById('filter-min-cores').value = String(preset.filter.minCores);
+            document.getElementById('filter-min-threads').value = String(preset.filter.minThreads);
+            document.getElementById('filter-min-cpu-bench').value = String(preset.filter.minCpuBench);
+          } else {
+            selectedMakers = new Set(preset.gpuFilter.makers);
+            document.getElementById('filter-min-vram').value = String(preset.gpuFilter.minVram);
+            document.getElementById('filter-min-gpu-bench').value = String(preset.gpuFilter.minGpuBench);
+          }
+        }
+      }
+      renderMakerCheckboxes();
+      renderGameSpecTable();
+      applyFilters();
+    }
+
+    function renderMakerCheckboxes() {
+      const container = document.getElementById('maker-checkboxes');
+      const makers = currentCategory === 'cpu' ? ['Intel', 'AMD'] : ['NVIDIA', 'AMD', 'Intel'];
+      container.innerHTML = makers.map(maker => {
+        const checked = selectedMakers.has(maker);
+        const style = getMakerBadgeStyle(maker);
+        return `
+          <label class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition select-none ${
+            checked
+              ? style.pill
+              : 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 border-slate-200 dark:border-slate-700/60'
+          }">
+            <input type="checkbox" class="sr-only" ${checked ? 'checked' : ''} onchange="toggleMaker('${maker}')" />
+            <span class="w-2 h-2 rounded-full ${checked ? style.dot : 'bg-slate-400'}"></span>
+            <span>${maker}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function toggleMaker(maker) {
+      if (selectedMakers.has(maker)) {
+        selectedMakers.delete(maker);
+      } else {
+        selectedMakers.add(maker);
+      }
+      renderMakerCheckboxes();
+      applyFilters();
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-keyword').value = '';
+      document.getElementById('filter-year-min').value = '2020';
+      document.getElementById('filter-year-max').value = '2026';
+      document.getElementById('filter-min-cores').value = '6';
+      document.getElementById('filter-min-threads').value = '10';
+      document.getElementById('filter-min-cpu-bench').value = '13000';
+      document.getElementById('filter-min-vram').value = '8';
+      document.getElementById('filter-min-gpu-bench').value = '7500';
+      selectedGameId = null;
+      const gameLabel = document.getElementById('selected-game-label');
+      if (gameLabel) gameLabel.textContent = '未選択';
+      selectedMakers = new Set(['Intel', 'AMD', 'NVIDIA']);
+      renderMakerCheckboxes();
+      renderGameSpecTable();
+      applyFilters();
+      showToast('検索条件をリセットしました');
+    }
+
+    function getFilteredData() {
+      const keyword = document.getElementById('filter-keyword').value.trim().toLowerCase();
+      let yearMin = parseInt(document.getElementById('filter-year-min').value, 10);
+      let yearMax = parseInt(document.getElementById('filter-year-max').value, 10);
+      if (yearMin > yearMax) [yearMin, yearMax] = [yearMax, yearMin];
+
+      if (currentCategory === 'cpu') {
+        const minCores = parseInt(document.getElementById('filter-min-cores').value, 10);
+        const minThreads = parseInt(document.getElementById('filter-min-threads').value, 10);
+        const minBench = parseInt(document.getElementById('filter-min-cpu-bench').value, 10);
+
+        document.getElementById('val-min-cores').textContent = minCores === 6 ? '指定なし (6+)' : `${minCores} コア以上`;
+        document.getElementById('val-min-threads').textContent = minThreads === 10 ? '指定なし (10+)' : `${minThreads} スレッド以上`;
+        document.getElementById('val-min-cpu-bench').textContent = `${minBench.toLocaleString()}+`;
+
+        return cpuData.filter(item => {
+          if (!selectedMakers.has(item['メーカー'])) return false;
+          if (item['発売年'] < yearMin || item['発売年'] > yearMax) return false;
+          if (item['コア数'] < minCores) return false;
+          if (item['スレッド数'] < minThreads) return false;
+          if (item['ベンチマーク'] < minBench) return false;
+          if (keyword && !(`${item['メーカー']} ${item['製品名']}`).toLowerCase().includes(keyword)) return false;
+          return true;
+        });
+      } else {
+        const minVram = parseInt(document.getElementById('filter-min-vram').value, 10);
+        const minBench = parseInt(document.getElementById('filter-min-gpu-bench').value, 10);
+
+        document.getElementById('val-min-vram').textContent = minVram === 8 ? '指定なし (8GB+)' : `${minVram} GB 以上`;
+        document.getElementById('val-min-gpu-bench').textContent = `${minBench.toLocaleString()}+`;
+
+        return gpuData.filter(item => {
+          if (!selectedMakers.has(item['メーカー'])) return false;
+          if (item['発売年'] < yearMin || item['発売年'] > yearMax) return false;
+          if (item['搭載メモリ数'] < minVram) return false;
+          if (item['ベンチマーク'] < minBench) return false;
+          if (keyword && !(`${item['メーカー']} ${item['製品名']}`).toLowerCase().includes(keyword)) return false;
+          return true;
+        });
+      }
+    }
+
+    function applyFilters() {
+      const filtered = getFilteredData();
+      document.getElementById('filtered-count').textContent = filtered.length;
+      document.getElementById('badge-total-cpu').textContent = cpuData.length;
+      document.getElementById('badge-total-gpu').textContent = gpuData.length;
+
+      renderListTable(filtered);
+    }
+
+    function handleSort(key) {
+      if (sortState.key === key) {
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.key = key;
+        sortState.dir = (key === '製品名' || key === 'メーカー') ? 'asc' : 'desc';
+      }
+      applyFilters();
+    }
+
+    function renderListTable(items) {
+      const isCpu = currentCategory === 'cpu';
+      document.getElementById('list-title').textContent = isCpu
+        ? 'CPU スペック一覧比較テーブル (PassMark)'
+        : 'GPU スペック一覧比較テーブル (3DMark Time Spy Graphics)';
+      document.getElementById('baseline-note').textContent = isCpu
+        ? 'Core i5-10400F (12,300) 超えモデル'
+        : 'GeForce RTX 3050 (6,050) 超えモデル';
+
+      const columns = isCpu
+        ? [
+            { key: 'メーカー', label: 'メーカー', align: 'left' },
+            { key: '製品名', label: '製品名', align: 'left' },
+            { key: '発売年', label: '発売年', align: 'center' },
+            { key: 'コア数', label: 'コア数', align: 'right' },
+            { key: 'スレッド数', label: 'スレッド数', align: 'right' },
+            { key: 'ベンチマーク', label: 'ベンチマーク (PassMark)', align: 'left' }
+          ]
+        : [
+            { key: 'メーカー', label: 'メーカー', align: 'left' },
+            { key: '製品名', label: '製品名', align: 'left' },
+            { key: '発売年', label: '発売年', align: 'center' },
+            { key: '搭載メモリ数', label: '搭載メモリ数', align: 'right' },
+            { key: 'ベンチマーク', label: 'ベンチマーク (Time Spy)', align: 'left' }
+          ];
+
+      const thead = document.getElementById('list-thead');
+      thead.innerHTML = `
+        <tr>
+          <th class="p-3 w-12 text-center">#</th>
+          ${columns.map(col => {
+            const isSorted = sortState.key === col.key;
+            const arrow = isSorted ? (sortState.dir === 'asc' ? '▲' : '▼') : '⇅';
+            const alignClass = col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left';
+            return `
+              <th onclick="handleSort('${col.key}')" class="p-3 cursor-pointer hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition ${alignClass}">
+                <span class="inline-flex items-center gap-1 ${isSorted ? 'text-indigo-600 dark:text-indigo-400' : ''}">
+                  <span>${col.label}</span>
+                  <span class="text-[10px] opacity-75">${arrow}</span>
+                </span>
+              </th>
+            `;
+          }).join('')}
+        </tr>
+      `;
+
+      const sorted = [...items].sort((a, b) => {
+        const valA = a[sortState.key];
+        const valB = b[sortState.key];
+        if (typeof valA === 'string') {
+          return sortState.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return sortState.dir === 'asc' ? valA - valB : valB - valA;
+      });
+
+      const maxScore = isCpu
+        ? Math.max(...cpuData.map(d => d['ベンチマーク']), 1)
+        : Math.max(...gpuData.map(d => d['ベンチマーク']), 1);
+
+      const tbody = document.getElementById('list-tbody');
+      if (sorted.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${columns.length + 1}" class="p-8 text-center text-sm text-slate-400">条件に一致する製品が見つかりませんでした。検索条件を緩めてお試しください。</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = sorted.map((item, idx) => {
+        const st = getMakerBadgeStyle(item['メーカー']);
+        const pct = Math.min(100, Math.round((item['ベンチマーク'] / maxScore) * 100));
+
+        const middleCells = isCpu
+          ? `<td class="p-3 text-right font-mono text-xs sm-text-sm-cell">${item['コア数']}</td>
+             <td class="p-3 text-right font-mono text-xs sm-text-sm-cell">${item['スレッド数']}</td>`
+          : `<td class="p-3 text-right font-mono text-xs sm-text-sm-cell">${item['搭載メモリ数']} <span class="text-xs text-slate-400">GB</span></td>`;
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <td class="p-3 text-center text-xs font-mono text-slate-400">${idx + 1}</td>
+            <td class="p-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${st.pill}">
+                <span class="w-1.5 h-1.5 rounded-full ${st.dot}"></span>
+                ${item['メーカー']}
+              </span>
+            </td>
+            <td class="p-3 font-bold text-slate-800 dark:text-slate-100">${item['製品名']}</td>
+            <td class="p-3 text-center font-mono text-xs sm-text-sm-cell text-slate-600 dark:text-slate-300">${item['発売年']}</td>
+            ${middleCells}
+            <td class="p-3 min-w-[200px]">
+              <div class="flex items-center gap-3">
+                <span class="font-mono font-bold text-xs sm-text-sm-cell w-16 text-right">${item['ベンチマーク'].toLocaleString()}</span>
+                <div class="progress-track">
+                  <div class="progress-fill ${st.bar}" style="width: ${pct}%"></div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderMakerCheckboxes();
+      renderGameSpecTable();
+      applyFilters();
+    });
+  </script>
+</body>
+</html>
